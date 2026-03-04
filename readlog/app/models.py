@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.conf import settings
 
 class Genre(models.Model):
     name = models.CharField(max_length=50)
@@ -22,7 +22,7 @@ class Status(models.Model):
         return self.name
 
 class ReadingRecord(models.Model):
-    user = models.ForeignKey(User,on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     genre = models.ForeignKey("Genre", on_delete=models.PROTECT)
     status = models.ForeignKey("Status", on_delete=models.PROTECT)
     google_book_id = models.CharField(max_length=255, blank=True, null=True)
