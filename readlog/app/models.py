@@ -2,26 +2,35 @@ from django.db import models
 from django.conf import settings
 
 class Genre(models.Model):
-    name = models.CharField(max_length=50)
 
     class Meta:
         verbose_name = "ジャンル"
         verbose_name_plural = "ジャンル"
 
+    name = models.CharField(max_length=50)
+
+    
+
     def __str__(self):
         return self.name
 
 class Status(models.Model):
-    name = models.CharField(max_length=50)
 
     class Meta:
         verbose_name = "状態タグ"
         verbose_name_plural = "状態タグ"
 
+    name = models.CharField(max_length=50)
+
     def __str__(self):
         return self.name
 
 class ReadingRecord(models.Model):
+
+    class Meta:
+        verbose_name = "読んだ本"
+        verbose_name_plural = "読んだ本"
+
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     genre = models.ForeignKey("Genre", on_delete=models.PROTECT)
     status = models.ForeignKey("Status", on_delete=models.PROTECT)
@@ -36,12 +45,5 @@ class ReadingRecord(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    class Meta:
-        verbose_name = "読んだ本"
-        verbose_name_plural = "読んだ本"
-
     def __str__(self):
         return f"{self.user.username} - {self.google_book_id}"
-    
-
-
