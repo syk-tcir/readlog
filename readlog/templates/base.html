@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>ReadLog</title>
+</head>
+<body>
+    <nav>
+        <a href="{% url 'home' %}">ReadLog</a> |
+        {% if user.is_authenticated %}
+            <span>ようこそ {{ user.username }} さん</span>
+            
+            <form action="{% url 'logout' %}" method="post" style="display: inline;">
+                {% csrf_token %}
+                <button type="submit" style="background: none; border: none; color: blue; text-decoration: underline; cursor: pointer; padding: 0;">ログアウト</button>
+            </form>
+            {% else %}
+            <a href="{% url 'login' %}">ログイン</a>
+        {% endif %}
+    </nav>
+
+    <hr>
+
+    <main>
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <hr>
+
+    <footer>
+        <p>&copy; 2026 ReadLog</p>
+    </footer>
+</body>
+</html>

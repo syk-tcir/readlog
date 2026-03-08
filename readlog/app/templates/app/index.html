@@ -1,3 +1,31 @@
-<h2>ReadLog ホーム画面</h2>
-<p>ようこそ、{{ user.username }} さん！</p>
-<a href="{% url 'logout' %}">ログアウト</a>
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>ReadLog</h2>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: center;">
+    <div style="background-color: #a0b1c0; padding: 20px; border-radius: 10px;">
+        <p>読んだ本</p>
+        <p>0冊</p>
+    </div>
+    <div style="background-color: #c0d0a0; padding: 20px; border-radius: 10px;">
+        <p>読んでる本</p>
+        <p>0冊</p>
+    </div>
+    <div style="background-color: #c0b0a0; padding: 20px; border-radius: 10px;">
+        <p>積読本</p>
+        <p>0冊</p>
+    </div>
+    <div style="background-color: #d0d0c0; padding: 20px; border-radius: 10px;">
+        <p>読みたい本</p>
+        <p>0冊</p>
+    </div>
+</div>
+
+<p style="margin-top: 20px; text-align: center;">
+    <a href="{% url 'api_test' %}" style="display: inline-block; padding: 10px 20px; background-color: #5bc0de; color: white; text-decoration: none; border-radius: 5px;">
+        本を検索する（実験室へ）
+    </a>
+</p>
+
+{% endblock %}
