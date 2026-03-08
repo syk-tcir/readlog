@@ -2,34 +2,104 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ReadLog</title>
+    <style>
+        /* 全体のレイアウト設定 */
+        body { 
+            margin: 0; 
+            padding-bottom: 80px; /* ボトムナビの高さ分、下を空ける */
+            font-family: sans-serif;
+            background-color: #f9f9f9;
+        }
+
+        /* コンテンツセクションの基本設定（index.html用） */
+        .content-section { display: none; }
+        .active { display: block; }
+
+        /* 上部のヘッダー：ログイン中のみ表示される想定 */
+        header {
+            padding: 10px;
+            background: #fff;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* ボトムナビゲーションのスタイル */
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            height: 70px; background-color: #d8e4bc; /* 設計図に近い色 */
+            display: flex; justify-content: space-around; align-items: center;
+            border-top: 1px solid #c0cfa1; z-index: 1000;
+        }
+
+        /* ナビゲーションボタン */
+        .nav-item {
+            background: none; border: none; color: #555;
+            font-size: 11px; cursor: pointer; flex: 1; text-align: center;
+        }
+        .nav-icon { font-size: 22px; display: block; margin-bottom: 2px; }
+        .active-btn { color: #2d5a27; font-weight: bold; }
+    </style>
 </head>
 <body>
-    <nav>
-        <a href="{% url 'home' %}">ReadLog</a> |
-        {% if user.is_authenticated %}
-            <span>ようこそ {{ user.username }} さん</span>
-            
-            <form action="{% url 'logout' %}" method="post" style="display: inline;">
-                {% csrf_token %}
-                <button type="submit" style="background: none; border: none; color: blue; text-decoration: underline; cursor: pointer; padding: 0;">ログアウト</button>
-            </form>
-            {% else %}
-            <a href="{% url 'login' %}">ログイン</a>
-        {% endif %}
-    </nav>
 
-    <hr>
+    <header>
+        <a href="{% url 'home' %}" style="text-decoration: none; font-weight: bold; color: #333;">ReadLog</a>
+        {% if user.is_authenticated %}
+            <div style="font-size: 12px;">
+                {{ user.username }}さん 
+                <form action="{% url 'logout' %}" method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" style="background: none; border: none; color: #888; text-decoration: underline; font-size: 11px; cursor: pointer;">ログアウト</button>
+                </form>
+            </div>
+        {% else %}
+            <a href="{% url 'login' %}" style="font-size: 12px;">ログイン</a>
+        {% endif %}
+    </header>
 
     <main>
         {% block content %}
         {% endblock %}
     </main>
 
-    <hr>
+    {% if user.is_authenticated %}
+    <nav class="bottom-nav">
+        <button class="nav-item active-btn" id="btn-home" onclick="showSection('home')">
+            <span class="nav-icon">🏠</span>ホーム
+        </button>
+        <button class="nav-item" id="btn-books" onclick="showSection('books')">
+            <span class="nav-icon">📚</span>本
+        </button>
+        <button class="nav-item" id="btn-search" onclick="showSection('search')">
+            <span class="nav-icon">🔍</span>検索
+        </button>
+        <button class="nav-item" id="btn-mypage" onclick="showSection('mypage')">
+            <span class="nav-icon">😊</span>マイページ
+        </button>
+    </nav>
 
-    <footer>
-        <p>&copy; 2026 ReadLog</p>
-    </footer>
+    <script>
+        function showSection(sectionId) {
+            // 全てのセクションを非表示
+            const sections = document.querySelectorAll('.content-section');
+            if (sections.length > 0) {
+                sections.forEach(s => s.style.display = 'none');
+                // 対象のセクションだけ表示
+                const target = document.getElementById(sectionId + '-section');
+                if (target) target.style.display = 'block';
+
+                // ボタンの色を切り替え
+                const buttons = document.querySelectorAll('.nav-item');
+                buttons.forEach(b => b.classList.remove('active-btn'));
+                document.getElementById('btn-' + sectionId).classList.add('active-btn');
+            }
+        }
+    </script>
+    {% endif %}
+
 </body>
 </html>
