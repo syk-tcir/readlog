@@ -1,30 +1,44 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.conf import settings  # ← 追加
 import requests
 
 @login_required
 def index(request):
-
     return render(request, 'app/index.html')
 
 def api_test(request):
-    # Google Books APIにリクエストを送る
-    url = "https://www.googleapis.com/books/v1/volumes?q=Python"
-    
-    try:
-        response = requests.get(url, timeout=5) # 5秒待ってダメなら諦める設定
-        data = response.json()
+    query = request.GET.get('q', '')
+    books_list = []
+
+    if query:
+        url = "https://www.googleapis.com/books/v1/volumes"
+        params = {
+            'q': query,
+            'maxResults': 10,
+            'key': settings.GOOGLE_BOOKS_API_KEY,  # ← APIキーを追加
+        }
         
-        # 'items' がデータの中に存在するかチェック
-        if 'items' in data and len(data['items']) > 0:
-            # 1冊目のタイトルを取得
-            book_title = data['items'][0]['volumeInfo'].get('title', 'タイトル情報なし')
-        else:
-            book_title = "Googleで本が見つかりませんでした"
+        try:
+            response = requests.get(url, params=params, timeout=5)
+            response.raise_for_status()
+            data = response.json()
             
-    except Exception as e:
-        # 通信自体に失敗した場合
-        book_title = f"通信エラーが発生しました: {e}"
-    
-    return render(request, 'app/api_test.html', {'title': book_title})
+            if 'items' in data:
+                for item in data['items']:
+                    info = item.get('volumeInfo', {})
+                    books_list.append({
+                        'title': info.get('title', 'タイトル不明'),
+                        'authors': info.get('authors', ['著者不明']),
+                        'thumbnail': info.get('imageLinks', {}).get('thumbnail', ''),
+                        'google_id': item.get('id'),
+                    })
+        except Exception as e:
+            messages.error(request, f"検索中にエラーが発生しました: {e}")
+
+    context = {
+        'query': query,
+        'books': books_list,
+    }
+    return render(request, 'app/api_test.html', context)
