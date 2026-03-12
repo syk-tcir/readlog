@@ -5,19 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ReadLog</title>
     <style>
-        /* 全体のレイアウト設定 */
         body { 
             margin: 0; 
-            padding-bottom: 80px; /* ボトムナビの高さ分、下を空ける */
+            padding-bottom: 80px;
             font-family: sans-serif;
             background-color: #f9f9f9;
         }
 
-        /* コンテンツセクションの基本設定（index.html用） */
         .content-section { display: none; }
         .active { display: block; }
 
-        /* 上部のヘッダー：ログイン中のみ表示される想定 */
         header {
             padding: 10px;
             background: #fff;
@@ -27,15 +24,13 @@
             align-items: center;
         }
 
-        /* ボトムナビゲーションのスタイル */
         .bottom-nav {
             position: fixed; bottom: 0; left: 0; width: 100%;
-            height: 70px; background-color: #d8e4bc; /* 設計図に近い色 */
+            height: 70px; background-color: #d8e4bc;
             display: flex; justify-content: space-around; align-items: center;
             border-top: 1px solid #c0cfa1; z-index: 1000;
         }
 
-        /* ナビゲーションボタン */
         .nav-item {
             background: none; border: none; color: #555;
             font-size: 11px; cursor: pointer; flex: 1; text-align: center;
@@ -51,15 +46,19 @@
         {% if user.is_authenticated %}
             <div style="font-size: 12px;">
                 {{ user.username }}さん 
-                <form action="{% url 'logout' %}" method="post" style="display: inline;">
-                    {% csrf_token %}
-                    <button type="submit" style="background: none; border: none; color: #888; text-decoration: underline; font-size: 11px; cursor: pointer;">ログアウト</button>
-                </form>
+                <button onclick="document.getElementById('logout-form').submit()" 
+                        style="background: none; border: none; color: #888; text-decoration: underline; font-size: 11px; cursor: pointer;">
+                    ログアウト
+                </button>
             </div>
         {% else %}
             <a href="{% url 'login' %}" style="font-size: 12px;">ログイン</a>
         {% endif %}
     </header>
+
+    <form id="logout-form" action="{% url 'logout' %}" method="post" style="display:none;">
+        {% csrf_token %}
+    </form>
 
     <main>
         {% block content %}
@@ -84,20 +83,34 @@
 
     <script>
         function showSection(sectionId) {
-            // 全てのセクションを非表示
             const sections = document.querySelectorAll('.content-section');
             if (sections.length > 0) {
-                sections.forEach(s => s.style.display = 'none');
-                // 対象のセクションだけ表示
-                const target = document.getElementById(sectionId + '-section');
-                if (target) target.style.display = 'block';
-
-                // ボタンの色を切り替え
-                const buttons = document.querySelectorAll('.nav-item');
-                buttons.forEach(b => b.classList.remove('active-btn'));
-                document.getElementById('btn-' + sectionId).classList.add('active-btn');
+            sections.forEach(s => s.style.display = 'none');
+            const target = document.getElementById(sectionId + '-section');
+            if (target) target.style.display = 'block';
+            const buttons = document.querySelectorAll('.nav-item');
+            buttons.forEach(b => b.classList.remove('active-btn'));
+            document.getElementById('btn-' + sectionId).classList.add('active-btn');
+            // URLにセクション情報を保存
+            history.replaceState(null, '', '?section=' + sectionId);
             }
         }
+
+        // ページ読み込み時：URLのsectionパラメータかqパラメータを見て表示を決める
+        document.addEventListener('DOMContentLoaded', function() {
+            const params = new URLSearchParams(window.location.search);
+            const section = params.get('section');
+            const query = params.get('q');
+
+            if (query) {
+            // 検索結果がある場合は検索タブを表示
+            showSection('search');
+            } else if (section) {
+            showSection(section);
+            } else {
+            showSection('home');
+            }
+        });
     </script>
     {% endif %}
 

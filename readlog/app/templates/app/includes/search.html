@@ -1,5 +1,313 @@
-<h2>🔍 本を検索</h2>
-<p>Google Books APIを使って本を探します。</p>
-<a href="{% url 'api_test' %}" style="display: inline-block; padding: 10px 20px; background-color: #5bc0de; color: white; text-decoration: none; border-radius: 5px;">
-    実験室（APIテスト）を開く
-</a>
+{% load static %}
+<style>
+  /* ── 検索画面専用スタイル ── */
+  #search-section {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 16px 16px 24px;
+  }
+
+  .search-header h2 {
+    font-size: 18px;
+    font-weight: 900;
+    color: #2d5a27;
+    margin-bottom: 12px;
+  }
+
+  .search-form-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .search-form-row input {
+    flex: 1;
+    padding: 10px 12px;
+    border: 1.5px solid #c5ddc0;
+    border-radius: 8px;
+    font-size: 14px;
+    outline: none;
+    background: #f8fbf8;
+  }
+
+  .search-form-row input:focus { border-color: #5a9e4f; }
+
+  .btn-search-submit {
+    padding: 0 16px;
+    height: 42px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #5a9e4f, #3a7a2f);
+    color: #fff;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+  }
+
+  .search-result-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #555;
+    margin-bottom: 10px;
+  }
+
+  .book-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border: 1.5px solid #dde8dd;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+
+  .book-cover-thumb {
+    width: 56px;
+    height: 76px;
+    border-radius: 5px;
+    background: #e0ede0;
+    flex-shrink: 0;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: #aaa;
+    border: 1px solid #cce0cc;
+  }
+
+  .book-cover-thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+  .book-card-info { flex: 1; min-width: 0; }
+
+  .book-card-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1e3d1a;
+    line-height: 1.4;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  .book-card-author { font-size: 11px; color: #7a9a75; margin-top: 4px; }
+
+  .btn-detail-open {
+    padding: 8px 14px;
+    background: linear-gradient(135deg, #5a9e4f, #3a7a2f);
+    color: #fff;
+    border: none;
+    border-radius: 7px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  .search-empty {
+    text-align: center;
+    padding: 48px 0;
+    color: #bbb;
+    font-size: 13px;
+  }
+
+  /* ── 詳細モーダル ── */
+  .detail-modal-bg {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 2000;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+
+  .detail-modal-bg.open { display: flex; }
+
+  .detail-modal {
+    background: #fff;
+    border-radius: 18px;
+    width: 100%;
+    max-width: 420px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.2);
+  }
+
+  .detail-modal-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 16px;
+    border-bottom: 1px solid #eaf2ea;
+    position: sticky;
+    top: 0;
+    background: #fff;
+    z-index: 10;
+    border-radius: 18px 18px 0 0;
+  }
+
+  .btn-modal-back {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: #3d7a33;
+  }
+
+  .detail-modal-header h3 { font-size: 15px; font-weight: 800; color: #2d5a27; }
+
+  .detail-modal-hero {
+    background: linear-gradient(160deg, #dbefd7 0%, #f0f8ee 70%, #fff 100%);
+    padding: 20px 20px 16px;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+
+  .detail-modal-cover {
+    width: 80px;
+    height: 110px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #cce4c8;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+  }
+
+  .detail-modal-cover img { width: 100%; height: 100%; object-fit: cover; }
+
+  .detail-modal-meta h4 { font-size: 14px; font-weight: 800; color: #1a3d17; line-height: 1.45; }
+  .detail-modal-meta p { font-size: 12px; color: #5a7a55; margin-top: 5px; }
+
+  .detail-modal-body { padding: 14px 20px 24px; }
+
+  .detail-section-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 800;
+    color: #2d5a27;
+    margin-bottom: 8px;
+  }
+
+  .detail-section-label::before {
+    content: '';
+    display: block;
+    width: 4px;
+    height: 15px;
+    background: #5a9e4f;
+    border-radius: 3px;
+  }
+
+  .detail-desc-box {
+    background: #f5faf4;
+    border: 1px solid #d8ecd4;
+    border-radius: 10px;
+    padding: 12px 14px;
+  }
+
+  .detail-desc-box p { font-size: 13px; color: #3a3a3a; line-height: 1.85; }
+</style>
+
+<!-- 検索フォーム -->
+<div class="search-header">
+  <h2>書籍を検索</h2>
+</div>
+
+<form class="search-form-row" method="GET" action="{% url 'home' %}">
+  <input type="text" name="q" value="{{ query }}" placeholder="タイトル・著者名で検索..." />
+  <button type="submit" class="btn-search-submit">🔍</button>
+</form>
+
+<!-- 検索結果 -->
+{% if query %}
+  {% if books %}
+    <p class="search-result-label">検索結果（{{ books|length }}件）</p>
+    {% for book in books %}
+      <div class="book-card">
+        <div class="book-cover-thumb">
+          {% if book.thumbnail %}
+            <img src="{{ book.thumbnail }}" alt="{{ book.title }}">
+          {% else %}
+            表紙
+          {% endif %}
+        </div>
+        <div class="book-card-info">
+          <div class="book-card-title">{{ book.title }}</div>
+          <div class="book-card-author">{{ book.authors|join:", " }}</div>
+        </div>
+        <button
+          class="btn-detail-open"
+          onclick="openDetailModal(
+            '{{ book.title|escapejs }}',
+            '{{ book.authors|join:', '|escapejs }}',
+            '{{ book.thumbnail|escapejs }}',
+            '{{ book.description|escapejs }}'
+          )"
+        >詳細</button>
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="search-empty">
+      <div style="font-size:40px;margin-bottom:10px;">📚</div>
+      「{{ query }}」の検索結果が見つかりませんでした
+    </div>
+  {% endif %}
+{% else %}
+  <div class="search-empty">
+    <div style="font-size:40px;margin-bottom:10px;">🔍</div>
+    キーワードを入力して検索してください
+  </div>
+{% endif %}
+
+<!-- 詳細モーダル -->
+<div class="detail-modal-bg" id="detail-modal-bg">
+  <div class="detail-modal">
+    <div class="detail-modal-header">
+      <button class="btn-modal-back" onclick="closeDetailModal()">←</button>
+      <h3>書籍詳細</h3>
+    </div>
+    <div class="detail-modal-hero">
+      <div class="detail-modal-cover" id="modal-cover">📚</div>
+      <div class="detail-modal-meta">
+        <h4 id="modal-title"></h4>
+        <p id="modal-author"></p>
+      </div>
+    </div>
+    <div class="detail-modal-body">
+      <div class="detail-section-label">あらすじ</div>
+      <div class="detail-desc-box">
+        <p id="modal-description"></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function openDetailModal(title, author, thumbnail, description) {
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-author').textContent = author;
+    document.getElementById('modal-description').textContent = description || 'あらすじ情報がありません。';
+    const cover = document.getElementById('modal-cover');
+    cover.innerHTML = thumbnail ? `<img src="${thumbnail}" alt="${title}">` : '📚';
+    document.getElementById('detail-modal-bg').classList.add('open');
+  }
+
+  function closeDetailModal() {
+    document.getElementById('detail-modal-bg').classList.remove('open');
+  }
+
+  document.getElementById('detail-modal-bg').addEventListener('click', function(e) {
+    if (e.target === this) closeDetailModal();
+  });
+</script>
