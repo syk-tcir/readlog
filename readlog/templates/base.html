@@ -61,6 +61,13 @@
     </form>
 
     <main>
+        {% if messages %}
+        {% for message in messages %}
+            <div style="background:#fff0f0;border:1px solid #e88;border-radius:10px;padding:12px;margin:12px 16px;color:#c00;font-size:13px;font-weight:700;">
+                ⚠️ {{ message }}
+            </div>
+        {% endfor %}
+        {% endif %}
         {% block content %}
         {% endblock %}
     </main>
@@ -85,30 +92,28 @@
         function showSection(sectionId) {
             const sections = document.querySelectorAll('.content-section');
             if (sections.length > 0) {
-            sections.forEach(s => s.style.display = 'none');
-            const target = document.getElementById(sectionId + '-section');
-            if (target) target.style.display = 'block';
-            const buttons = document.querySelectorAll('.nav-item');
-            buttons.forEach(b => b.classList.remove('active-btn'));
-            document.getElementById('btn-' + sectionId).classList.add('active-btn');
-            // URLにセクション情報を保存
-            history.replaceState(null, '', '?section=' + sectionId);
+                sections.forEach(s => s.style.display = 'none');
+                const target = document.getElementById(sectionId + '-section');
+                if (target) target.style.display = 'block';
+                const buttons = document.querySelectorAll('.nav-item');
+                buttons.forEach(b => b.classList.remove('active-btn'));
+                document.getElementById('btn-' + sectionId).classList.add('active-btn');
+                history.replaceState(null, '', '?section=' + sectionId);
             }
         }
-
-        // ページ読み込み時：URLのsectionパラメータかqパラメータを見て表示を決める
         document.addEventListener('DOMContentLoaded', function() {
             const params = new URLSearchParams(window.location.search);
             const section = params.get('section');
             const query = params.get('q');
 
-            if (query) {
-            // 検索結果がある場合は検索タブを表示
-            showSection('search');
+            if (section === 'books') {
+                showSection('books');
+            } else if (query) {
+                showSection('search');
             } else if (section) {
-            showSection(section);
+                showSection(section);
             } else {
-            showSection('home');
+                showSection('home');
             }
         });
     </script>

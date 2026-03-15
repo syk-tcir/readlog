@@ -217,6 +217,112 @@
   }
 
   .detail-desc-box p { font-size: 13px; color: #3a3a3a; line-height: 1.85; }
+
+  /* ── 登録ボタン（詳細モーダル内） ── */
+  .btn-open-category {
+    width: 100%;
+    margin-top: 16px;
+    padding: 13px;
+    background: linear-gradient(135deg, #5a9e4f, #3a7a2f);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 800;
+    cursor: pointer;
+    letter-spacing: 0.3px;
+  }
+
+  /* ── カテゴリモーダル ── */
+  .category-modal-bg {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 3000;
+    align-items: flex-end;
+    justify-content: center;
+  }
+
+  .category-modal-bg.open { display: flex; }
+
+  .category-sheet {
+    background: #fff;
+    border-radius: 18px 18px 0 0;
+    padding: 20px 20px 40px;
+    width: 100%;
+    max-width: 480px;
+  }
+
+  .category-sheet h3 {
+    font-size: 15px;
+    font-weight: 800;
+    color: #2d5a27;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+
+  .category-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .category-choice {
+    padding: 16px 8px;
+    border: 2px solid #c5ddc0;
+    border-radius: 12px;
+    background: #f8fbf8;
+    font-size: 13px;
+    font-weight: 700;
+    color: #2d5a27;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s;
+  }
+
+  .category-choice:hover { background: #e0f0dc; border-color: #5a9e4f; }
+  .category-choice.selected { background: #5a9e4f; color: #fff; border-color: #3a7a2f; }
+
+  .btn-do-register {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #5a9e4f, #3a7a2f);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+    margin-bottom: 8px;
+  }
+
+  .btn-do-register:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+  }
+
+  .btn-cancel-modal {
+    width: 100%;
+    padding: 10px;
+    background: none;
+    border: 1.5px solid #ccc;
+    border-radius: 12px;
+    font-size: 13px;
+    cursor: pointer;
+    color: #888;
+  }
+
+  .register-success {
+    border-radius: 10px;
+    padding: 12px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 700;
+    margin-top: 10px;
+    display: none;
+  }
 </style>
 
 <!-- 検索フォーム -->
@@ -225,7 +331,7 @@
 </div>
 
 <form class="search-form-row" method="GET" action="{% url 'home' %}">
-  <input type="text" name="q" value="{{ query }}" placeholder="タイトル・著者名で検索..." />
+  <input type="text" name="q" value="{{ query }}" placeholder="タイトル・著者名で検索..." required />
   <button type="submit" class="btn-search-submit">🔍</button>
 </form>
 
@@ -252,7 +358,8 @@
             '{{ book.title|escapejs }}',
             '{{ book.authors|join:', '|escapejs }}',
             '{{ book.thumbnail|escapejs }}',
-            '{{ book.description|escapejs }}'
+            '{{ book.description|escapejs }}',
+            '{{ book.google_id|escapejs }}'
           )"
         >詳細</button>
       </div>
@@ -270,7 +377,7 @@
   </div>
 {% endif %}
 
-<!-- 詳細モーダル -->
+<!-- ══ 詳細モーダル ══ -->
 <div class="detail-modal-bg" id="detail-modal-bg">
   <div class="detail-modal">
     <div class="detail-modal-header">
@@ -289,18 +396,41 @@
       <div class="detail-desc-box">
         <p id="modal-description"></p>
       </div>
+      <button class="btn-open-category" onclick="openCategoryModal()">
+        📖 この本を登録する
+      </button>
     </div>
   </div>
 </div>
 
+<!-- ══ カテゴリ選択モーダル ══ -->
+<div class="category-modal-bg" id="category-modal-bg">
+  <div class="category-sheet">
+    <h3>どのカテゴリに登録しますか？</h3>
+    <div class="category-grid">
+      <button class="category-choice" onclick="selectCategory(this, 'read')">📚 読んだ本</button>
+      <button class="category-choice" onclick="selectCategory(this, 'reading')">📖 読んでる本</button>
+      <button class="category-choice" onclick="selectCategory(this, 'stacked')">📦 積読本</button>
+      <button class="category-choice" onclick="selectCategory(this, 'want')">🔖 読みたい本</button>
+    </div>
+    <button class="btn-do-register" id="btn-do-register" onclick="submitRegister()" disabled>登録する</button>
+    <button class="btn-cancel-modal" onclick="closeCategoryModal()">キャンセル</button>
+    <div class="register-success" id="register-success"></div>
+  </div>
+</div>
+
 <script>
-  function openDetailModal(title, author, thumbnail, description) {
+  let registerData = {};
+  let selectedCategoryValue = '';
+
+  function openDetailModal(title, author, thumbnail, description, googleBookId) {
     document.getElementById('modal-title').textContent = title;
     document.getElementById('modal-author').textContent = author;
     document.getElementById('modal-description').textContent = description || 'あらすじ情報がありません。';
     const cover = document.getElementById('modal-cover');
     cover.innerHTML = thumbnail ? `<img src="${thumbnail}" alt="${title}">` : '📚';
     document.getElementById('detail-modal-bg').classList.add('open');
+    registerData = { title, author, thumbnail, description, googleBookId };
   }
 
   function closeDetailModal() {
@@ -310,4 +440,106 @@
   document.getElementById('detail-modal-bg').addEventListener('click', function(e) {
     if (e.target === this) closeDetailModal();
   });
+
+  function openCategoryModal() {
+    selectedCategoryValue = '';
+    document.querySelectorAll('.category-choice').forEach(b => b.classList.remove('selected'));
+    document.getElementById('btn-do-register').disabled = true;
+    document.getElementById('register-success').style.display = 'none';
+    document.getElementById('category-modal-bg').classList.add('open');
+  }
+
+  function closeCategoryModal() {
+    document.getElementById('category-modal-bg').classList.remove('open');
+  }
+
+  function selectCategory(btn, value) {
+    document.querySelectorAll('.category-choice').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    selectedCategoryValue = value;
+    document.getElementById('btn-do-register').disabled = false;
+  }
+
+  function showMsg(isError, text) {
+    const msg = document.getElementById('register-success');
+    if (isError) {
+      msg.style.background = '#fff0f0';
+      msg.style.border = '1px solid #e88';
+      msg.style.color = '#c00';
+    } else {
+      msg.style.background = '#e8f5e8';
+      msg.style.border = '1px solid #5a9e4f';
+      msg.style.color = '#2d5a27';
+    }
+    msg.textContent = text;
+    msg.style.display = 'block';
+  }
+
+  function submitRegister() {
+    if (!selectedCategoryValue) return;
+
+    const csrfToken = document.cookie.split(';')
+      .find(c => c.trim().startsWith('csrftoken='))
+      ?.split('=')[1];
+
+    // まず重複チェック
+    fetch("{% url 'check_book_exists' %}", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-CSRFToken': csrfToken,
+      },
+      body: new URLSearchParams({
+        google_book_id: registerData.googleBookId || '',
+      })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.exists) {
+        // すでに登録済みならエラー表示
+        showMsg(true, '⚠️ この本はすでに登録済みです');
+        return;
+      }
+
+      // 未登録の場合
+      if (selectedCategoryValue === 'read') {
+        // 「読んだ本」は詳細登録画面へ
+        const params = new URLSearchParams({
+          google_book_id: registerData.googleBookId || '',
+          title: registerData.title || '',
+          author: registerData.author || '',
+          thumbnail_url: registerData.thumbnail || '',
+          description: registerData.description || '',
+        });
+        window.location.href = "{% url 'book_register_detail' %}?" + params.toString();
+      } else {
+        // それ以外はそのまま登録
+        fetch("{% url 'register_book' %}", {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': csrfToken,
+          },
+          body: new URLSearchParams({
+            google_book_id: registerData.googleBookId || '',
+            title: registerData.title || '',
+            author: registerData.author || '',
+            thumbnail_url: registerData.thumbnail || '',
+            description: registerData.description || '',
+            category: selectedCategoryValue,
+          })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.status === 'ok') {
+            showMsg(false, '✅ ' + data.message);
+            document.getElementById('btn-do-register').disabled = true;
+            setTimeout(() => closeCategoryModal(), 1500);
+          } else {
+            showMsg(true, '⚠️ ' + data.message);
+          }
+        });
+      }
+    });
+  }
 </script>

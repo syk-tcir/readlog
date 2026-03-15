@@ -1,6 +1,70 @@
-<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: center;">
-    <div style="background-color: #a0b1c0; padding: 20px; border-radius: 10px;"><p>読んだ本</p><p>0冊</p></div>
-    <div style="background-color: #c0d0a0; padding: 20px; border-radius: 10px;"><p>読んでる本</p><p>0冊</p></div>
-    <div style="background-color: #c0b0a0; padding: 20px; border-radius: 10px;"><p>積読本</p><p>0冊</p></div>
-    <div style="background-color: #d0d0c0; padding: 20px; border-radius: 10px;"><p>読みたい本</p><p>0冊</p></div>
+<style>
+  .home-wrap {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 100px 16px;
+  }
+
+  .home-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .home-card {
+    padding: 36px 16px;  /* ← 大きく */
+    border-radius: 14px;
+    text-align: center;
+    text-decoration: none;
+    display: block;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+
+  .home-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  }
+
+  .home-card-label {
+    font-size: 15px;
+    font-weight: 800;
+    color: #444;  /* ← 黒っぽく */
+    margin-bottom: 10px;
+  }
+
+  .home-card-count {
+    font-size: 14px;
+    color: #444;  /* ← 黒っぽく */
+    font-weight: 600;
+  }
+
+  .card-read    { background-color: #a0b8cc; }
+  .card-reading { background-color: #a8c490; }
+  .card-stacked { background-color: #c4aa90; }
+  .card-want    { background-color: #c8c8a8; }
+</style>
+
+<div class="home-wrap">
+  <div class="home-grid">
+    <a class="home-card card-read"
+       href="{% url 'home' %}?section=books&category=read">
+      <div class="home-card-label">読んだ本</div>
+      <div class="home-card-count">{{ count_read }}冊</div>
+    </a>
+    <a class="home-card card-reading"
+       href="{% url 'home' %}?section=books&category=reading">
+      <div class="home-card-label">読んでる本</div>
+      <div class="home-card-count">{{ count_reading }}冊</div>
+    </a>
+    <a class="home-card card-stacked"
+       href="{% url 'home' %}?section=books&category=stacked">
+      <div class="home-card-label">積読本</div>
+      <div class="home-card-count">{{ count_stacked }}冊</div>
+    </a>
+    <a class="home-card card-want"
+       href="{% url 'home' %}?section=books&category=want">
+      <div class="home-card-label">読みたい本</div>
+      <div class="home-card-count">{{ count_want }}冊</div>
+    </a>
+  </div>
 </div>

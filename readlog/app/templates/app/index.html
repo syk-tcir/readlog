@@ -1,19 +1,15 @@
 {% extends 'base.html' %}
-
 {% block content %}
-    <div id="home-section" class="content-section" style="display: block;">
+    <div id="home-section" class="content-section">
         {% include 'app/includes/home.html' %}
     </div>
-
-    <div id="books-section" class="content-section" style="display: none;">
+    <div id="books-section" class="content-section">
         {% include 'app/includes/book_list.html' %}
     </div>
-
-    <div id="search-section" class="content-section" style="display: none;">
+    <div id="search-section" class="content-section">
         {% include 'app/includes/search.html' %}
     </div>
-
-    <div id="mypage-section" class="content-section" style="display: none;">
+    <div id="mypage-section" class="content-section">
         {% include 'app/includes/mypage.html' %}
     </div>
 {% endblock %}

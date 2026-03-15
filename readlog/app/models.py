@@ -47,3 +47,27 @@ class ReadingRecord(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.google_book_id}"
+    
+class Book(models.Model):
+    CATEGORY_CHOICES = [
+        ('read', '読んだ本'),
+        ('reading', '読んでる本'),
+        ('stacked', '積読本'),
+        ('want', '読みたい本'),
+    ]
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    google_book_id = models.CharField(max_length=255, blank=True, null=True)
+    title = models.CharField(max_length=200)
+    author = models.CharField(max_length=200, blank=True)
+    thumbnail_url = models.URLField(blank=True)
+    description = models.TextField(blank=True)
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "書籍"
+        verbose_name_plural = "書籍"
+
+    def __str__(self):
+        return f"{self.title} ({self.get_category_display()})"

@@ -1,0 +1,319 @@
+{% extends 'base.html' %}
+{% block content %}
+<style>
+  .register-wrap {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 16px 16px 40px;
+  }
+
+  .register-wrap h2 {
+    font-size: 16px;
+    font-weight: 800;
+    color: #2d5a27;
+    margin-bottom: 16px;
+  }
+
+  /* 書籍プレビュー */
+  .book-preview {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    background: #f0f8ee;
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 20px;
+    border: 1px solid #d0e8cc;
+  }
+
+  .book-preview-cover {
+    width: 64px;
+    height: 88px;
+    border-radius: 7px;
+    overflow: hidden;
+    background: #ddeedd;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    border: 1px solid #cce0cc;
+  }
+
+  .book-preview-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .book-preview-info h3 {
+    font-size: 14px;
+    font-weight: 800;
+    color: #1a3d17;
+    line-height: 1.4;
+  }
+
+  .book-preview-info p {
+    font-size: 12px;
+    color: #5a7a55;
+    margin-top: 4px;
+  }
+
+  /* フォーム */
+  .form-group {
+    margin-bottom: 16px;
+  }
+
+  .form-group label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    color: #2d5a27;
+    margin-bottom: 6px;
+  }
+
+  .form-group input[type="date"],
+  .form-group select,
+  .form-group textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 9px;
+    border: 1.5px solid #c5ddc0;
+    font-size: 13px;
+    background: #f8fbf8;
+    outline: none;
+    font-family: inherit;
+    transition: border 0.2s;
+  }
+
+  .form-group input[type="date"]:focus,
+  .form-group select:focus,
+  .form-group textarea:focus {
+    border-color: #5a9e4f;
+  }
+
+  .form-group textarea {
+    resize: vertical;
+    min-height: 80px;
+  }
+
+  /* 不明チェックボックス */
+  .date-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .date-row input[type="date"] {
+    flex: 1;
+  }
+
+  .unknown-label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: #666;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+
+  /* 読後感（絵文字ラジオ） */
+  .emotion-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .emotion-row input[type="radio"] { display: none; }
+
+  .emotion-row label {
+    font-size: 24px;
+    cursor: pointer;
+    opacity: 0.35;
+    transition: opacity 0.15s, transform 0.15s;
+  }
+
+  .emotion-row input[type="radio"]:checked + label {
+    opacity: 1;
+    transform: scale(1.25);
+  }
+
+  /* 再読予定ラジオ */
+  .reread-row {
+    display: flex;
+    gap: 16px;
+  }
+
+  .reread-option {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #333;
+    cursor: pointer;
+  }
+
+  /* 任意バッジ */
+  .optional-badge {
+    font-size: 10px;
+    color: #aaa;
+    font-weight: 400;
+    margin-left: 4px;
+  }
+
+  /* 登録ボタン */
+  .btn-register-final {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #5a9e4f, #3a7a2f);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+    margin-top: 8px;
+    box-shadow: 0 3px 12px rgba(60,120,50,0.25);
+  }
+
+  .divider {
+    height: 1px;
+    background: #eaf2ea;
+    margin: 20px 0;
+  }
+</style>
+
+<div class="register-wrap">
+  <h2>📚 読んだ本を登録する</h2>
+
+  <!-- 書籍プレビュー -->
+  <div class="book-preview">
+    <div class="book-preview-cover">
+      {% if thumbnail_url %}
+        <img src="{{ thumbnail_url }}" alt="{{ title }}">
+      {% else %}
+        📚
+      {% endif %}
+    </div>
+    <div class="book-preview-info">
+      <h3>{{ title }}</h3>
+      <p>{{ author }}</p>
+    </div>
+  </div>
+
+  {% if messages %}
+  {% for message in messages %}
+    <div style="background:#fff0f0;border:1px solid #e88;border-radius:10px;padding:12px;margin-bottom:16px;color:#c00;font-size:13px;font-weight:700;">
+      ⚠️ {{ message }}
+    </div>
+  {% endfor %}
+{% endif %}
+
+  <!-- 登録フォーム -->
+  <form method="POST" action="{% url 'book_register_detail' %}">
+    {% csrf_token %}
+    <input type="hidden" name="from_edit" value="{{ from_edit }}">
+    <!-- 隠しフィールド -->
+    <input type="hidden" name="google_book_id" value="{{ google_book_id }}">
+    <input type="hidden" name="title" value="{{ title }}">
+    <input type="hidden" name="author" value="{{ author }}">
+    <input type="hidden" name="thumbnail_url" value="{{ thumbnail_url }}">
+    <input type="hidden" name="description" value="{{ description }}">
+
+    <!-- 日付 -->
+    <div class="form-group">
+      <label>日付</label>
+      <div class="date-row">
+        <input type="date" name="read_date" id="read-date"
+               value="{% now 'Y-m-d' %}">
+        <label class="unknown-label">
+          <input type="checkbox" id="unknown-date" onchange="toggleDate(this)">
+          不明
+        </label>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ジャンル（任意） -->
+    <div class="form-group">
+      <label>ジャンル <span class="optional-badge">任意</span></label>
+      <select name="genre">
+        <option value="">-- 選択してください --</option>
+        {% for genre in genres %}
+          <option value="{{ genre.id }}">{{ genre.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- 読後感（任意） -->
+    <div class="form-group">
+      <label>読後感 <span class="optional-badge">任意</span></label>
+      <div class="emotion-row">
+        <input type="radio" name="emotion" id="e0" value="0">
+        <label for="e0">😞</label>
+        <input type="radio" name="emotion" id="e1" value="1">
+        <label for="e1">😐</label>
+        <input type="radio" name="emotion" id="e2" value="2" checked>
+        <label for="e2">🙂</label>
+        <input type="radio" name="emotion" id="e3" value="3">
+        <label for="e3">😊</label>
+        <input type="radio" name="emotion" id="e4" value="4">
+        <label for="e4">😍</label>
+      </div>
+    </div>
+
+    <!-- 状態タグ（任意） -->
+    <div class="form-group">
+      <label>状態タグ <span class="optional-badge">任意</span></label>
+      <select name="status">
+        <option value="">-- 選択してください --</option>
+        {% for status in statuses %}
+          <option value="{{ status.id }}">{{ status.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- 再読予定（任意） -->
+    <div class="form-group">
+      <label>再読予定 <span class="optional-badge">任意</span></label>
+      <div class="reread-row">
+        <label class="reread-option">
+          <input type="radio" name="reread_flag" value="1"> する
+        </label>
+        <label class="reread-option">
+          <input type="radio" name="reread_flag" value="0" checked> しない
+        </label>
+      </div>
+    </div>
+
+    <!-- 印象に残ったところ（任意） -->
+    <div class="form-group">
+      <label>印象に残ったところ <span class="optional-badge">任意</span></label>
+      <textarea name="impressive_text" placeholder="1番印象に残ったシーンや言葉を入力..."></textarea>
+    </div>
+
+    <!-- 自由記述（任意） -->
+    <div class="form-group">
+      <label>自由記述 <span class="optional-badge">任意</span></label>
+      <textarea name="memo" placeholder="感想や気づきなど自由に..."></textarea>
+    </div>
+
+    <button type="submit" class="btn-register-final">登録する</button>
+  </form>
+</div>
+
+<script>
+  function toggleDate(checkbox) {
+    const dateInput = document.getElementById('read-date');
+    if (checkbox.checked) {
+      dateInput.value = '';
+      dateInput.disabled = true;
+    } else {
+      dateInput.disabled = false;
+    }
+  }
+</script>
+
+{% endblock %}

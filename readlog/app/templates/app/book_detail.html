@@ -1,0 +1,238 @@
+{% extends 'base.html' %}
+{% block content %}
+<style>
+  .detail-wrap {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 16px 16px 40px;
+  }
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: #5a9e4f;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+    margin-bottom: 16px;
+  }
+
+  /* 書籍プレビュー */
+  .book-preview {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    background: #f0f8ee;
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 20px;
+    border: 1px solid #d0e8cc;
+  }
+
+  .book-preview-cover {
+    width: 72px;
+    height: 100px;
+    border-radius: 7px;
+    overflow: hidden;
+    background: #ddeedd;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    border: 1px solid #cce0cc;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+
+  .book-preview-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .book-preview-info h3 {
+    font-size: 15px;
+    font-weight: 800;
+    color: #1a3d17;
+    line-height: 1.4;
+  }
+
+  .book-preview-info p {
+    font-size: 12px;
+    color: #5a7a55;
+    margin-top: 4px;
+  }
+
+  /* 情報カード */
+  .info-card {
+    background: #f6fbf5;
+    border: 1px solid #ddeedd;
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+  }
+
+  .info-row {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 12px;
+  }
+
+  .info-row:last-child { margin-bottom: 0; }
+
+  .info-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #7a9a75;
+    margin-bottom: 4px;
+  }
+
+  .info-value {
+    font-size: 13px;
+    color: #333;
+    line-height: 1.6;
+  }
+
+  .emotion-display { font-size: 22px; }
+
+  /* 編集・削除ボタン */
+  .action-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+  }
+
+  .btn-edit {
+    flex: 1;
+    padding: 13px;
+    background: #f0f8ee;
+    color: #2d5a27;
+    border: 2px solid #5a9e4f;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 800;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+    display: block;
+  }
+
+  .btn-delete {
+    flex: 1;
+    padding: 13px;
+    background: #e53935;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 800;
+    cursor: pointer;
+  }
+</style>
+
+<div class="detail-wrap">
+  <a class="back-link" href="{% url 'home' %}?section=books&category={{ book.category }}">← 一覧に戻る</a>
+
+  <!-- 書籍プレビュー -->
+  <div class="book-preview">
+    <div class="book-preview-cover">
+      {% if book.thumbnail_url %}
+        <img src="{{ book.thumbnail_url }}" alt="{{ book.title }}">
+      {% else %}
+        📚
+      {% endif %}
+    </div>
+    <div class="book-preview-info">
+      <h3>{{ book.title }}</h3>
+      <p>{{ book.author }}</p>
+    </div>
+  </div>
+
+  <!-- 読んだ本のみ詳細情報を表示 -->
+  {% if book.category == 'read' and reading_record %}
+  <div class="info-card">
+    <!-- 日付 -->
+    <div class="info-row">
+      <span class="info-label">日付</span>
+      <span class="info-value">
+        {% if reading_record.read_date %}{{ reading_record.read_date }}{% else %}不明{% endif %}
+      </span>
+    </div>
+
+    <!-- ジャンル -->
+    {% if reading_record.genre %}
+    <div class="info-row">
+      <span class="info-label">ジャンル</span>
+      <span class="info-value">{{ reading_record.genre.name }}</span>
+    </div>
+    {% endif %}
+
+    <!-- 読後感 -->
+    <div class="info-row">
+      <span class="info-label">読後感</span>
+      <span class="emotion-display">
+        {% if reading_record.emotion == 0 %}😞
+        {% elif reading_record.emotion == 1 %}😐
+        {% elif reading_record.emotion == 2 %}🙂
+        {% elif reading_record.emotion == 3 %}😊
+        {% elif reading_record.emotion == 4 %}🤩
+        {% endif %}
+      </span>
+    </div>
+
+    <!-- 状態タグ -->
+    {% if reading_record.status %}
+    <div class="info-row">
+      <span class="info-label">状態タグ</span>
+      <span class="info-value">{{ reading_record.status.name }}</span>
+    </div>
+    {% endif %}
+
+    <!-- 再読予定 -->
+    <div class="info-row">
+      <span class="info-label">再読予定</span>
+      <span class="info-value">
+        {% if reading_record.reread_flag == 1 %}する{% else %}しない{% endif %}
+      </span>
+    </div>
+
+    <!-- 印象に残ったところ -->
+    {% if reading_record.impressive_text %}
+    <div class="info-row">
+      <span class="info-label">印象に残ったところ</span>
+      <span class="info-value">{{ reading_record.impressive_text }}</span>
+    </div>
+    {% endif %}
+
+    <!-- 自由記述 -->
+    {% if reading_record.memo %}
+    <div class="info-row">
+      <span class="info-label">自由記述</span>
+      <span class="info-value">{{ reading_record.memo }}</span>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- 編集・削除ボタン -->
+  <div class="action-buttons">
+    <a class="btn-edit" href="{% url 'book_edit' book.id %}">編集</a>
+    <button class="btn-delete" onclick="confirmDelete()">削除</button>
+  </div>
+</div>
+
+<!-- 削除確認フォーム -->
+<form id="delete-form" method="POST" action="{% url 'book_delete' book.id %}" style="display:none;">
+  {% csrf_token %}
+</form>
+
+<script>
+  function confirmDelete() {
+    if (confirm('「{{ book.title|escapejs }}」を削除しますか？\nこの操作は取り消せません。')) {
+      document.getElementById('delete-form').submit();
+    }
+  }
+</script>
+
+{% endblock %}
