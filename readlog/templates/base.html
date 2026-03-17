@@ -83,9 +83,9 @@
         <button class="nav-item" id="btn-search" onclick="showSection('search')">
             <span class="nav-icon">🔍</span>検索
         </button>
-        <button class="nav-item" id="btn-mypage" onclick="showSection('mypage')">
-            <span class="nav-icon">😊</span>マイページ
-        </button>
+        <a class="nav-item" href="{% url 'mypage' %}" style="text-decoration:none;">
+        <span class="nav-icon">😊</span>マイページ
+        </a>
     </nav>
 
     <script>

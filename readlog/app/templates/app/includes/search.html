@@ -323,6 +323,60 @@
     margin-top: 10px;
     display: none;
   }
+  /* ランダム表示 */
+.random-section {
+  margin-top: 24px;
+}
+
+.random-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: #2d5a27;
+  margin-bottom: 14px;
+}
+
+.random-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.random-item {
+  cursor: pointer;
+}
+
+.random-cover {
+  width: 100%;
+  aspect-ratio: 2/3;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #e0ede0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  border: 1px solid #cce0cc;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  margin-bottom: 6px;
+}
+
+.random-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.random-book-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #1e3d1a;
+  line-height: 1.3;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  text-align: center;
+}
 </style>
 
 <!-- 検索フォーム -->
@@ -331,7 +385,7 @@
 </div>
 
 <form class="search-form-row" method="GET" action="{% url 'home' %}">
-  <input type="text" name="q" value="{{ query }}" placeholder="タイトル・著者名で検索..." required />
+  <input type="text" name="q" value="{{ query }}" placeholder="タイトル・著者名・ISBNで検索..." required />
   <button type="submit" class="btn-search-submit">🔍</button>
 </form>
 
@@ -375,6 +429,36 @@
     <div style="font-size:40px;margin-bottom:10px;">🔍</div>
     キーワードを入力して検索してください
   </div>
+
+  <!-- 新しい本との出会い -->
+  {% if random_books %}
+  <div class="random-section">
+    <h3 class="random-title">📚 新しい本との出会い</h3>
+    <div class="random-grid">
+      {% for book in random_books %}
+        {% with info=book.volumeInfo %}
+        <div class="random-item"
+          onclick="openDetailModal(
+            '{{ info.title|escapejs }}',
+            '{{ info.authors.0|default:'著者不明'|escapejs }}',
+            '{{ info.imageLinks.thumbnail|escapejs }}',
+            '{{ info.description|default:''|escapejs }}',
+            '{{ book.id|escapejs }}'
+          )">
+          <div class="random-cover">
+            {% if info.imageLinks.thumbnail %}
+              <img src="{{ info.imageLinks.thumbnail }}" alt="{{ info.title }}">
+            {% else %}
+              📖
+            {% endif %}
+          </div>
+          <div class="random-book-title">{{ info.title }}</div>
+        </div>
+        {% endwith %}
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
 {% endif %}
 
 <!-- ══ 詳細モーダル ══ -->

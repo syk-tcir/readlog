@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+{% block content %}
+<style>
+  .edit-wrap {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 20px 16px 40px;
+  }
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: #5a9e4f;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+    margin-bottom: 16px;
+  }
+
+  .edit-wrap h2 {
+    font-size: 16px;
+    font-weight: 800;
+    color: #2d5a27;
+    margin-bottom: 20px;
+  }
+
+  .form-group {
+    margin-bottom: 16px;
+  }
+
+  .form-group label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    color: #2d5a27;
+    margin-bottom: 6px;
+  }
+
+  .form-group input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1.5px solid #c5ddc0;
+    border-radius: 9px;
+    font-size: 14px;
+    outline: none;
+    background: #f8fbf8;
+    transition: border 0.2s;
+    font-family: inherit;
+  }
+
+  .form-group input:focus { border-color: #5a9e4f; }
+
+  .btn-submit {
+    width: 100%;
+    padding: 13px;
+    background: linear-gradient(135deg, #5a9e4f, #3a7a2f);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+    margin-top: 8px;
+  }
+
+  .error-msg {
+    background: #fff0f0;
+    border: 1px solid #e88;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 13px;
+    color: #c00;
+    margin-bottom: 16px;
+    font-weight: 700;
+  }
+</style>
+
+<div class="edit-wrap">
+  <a class="back-link" href="{% url 'mypage' %}">← マイページに戻る</a>
+  <h2>アカウント情報変更</h2>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="error-msg">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <form method="POST" action="{% url 'account_edit' %}">
+    {% csrf_token %}
+    <div class="form-group">
+      <label>名前</label>
+      <input type="text" name="username" value="{{ user.username }}" required>
+    </div>
+    <div class="form-group">
+      <label>メールアドレス</label>
+      <input type="email" name="email" value="{{ user.email }}" required>
+    </div>
+    <button type="submit" class="btn-submit">変更する</button>
+  </form>
+</div>
+
+{% endblock %}

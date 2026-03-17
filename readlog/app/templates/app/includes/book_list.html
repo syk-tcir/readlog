@@ -9,7 +9,7 @@
   .booklist-search-row {
     display: flex;
     gap: 8px;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
   }
 
   .booklist-search-row input {
@@ -35,6 +35,123 @@
     cursor: pointer;
   }
 
+  /* 詳細検索トグル */
+  .detail-search-toggle {
+    text-align: right;
+    margin-bottom: 8px;
+  }
+
+  .detail-search-toggle a {
+    font-size: 12px;
+    color: #5a9e4f;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  /* アコーディオン */
+  .detail-search-panel {
+    background: #f0f8ee;
+    border: 1.5px solid #c5ddc0;
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    display: none;
+  }
+
+  .detail-search-panel.open { display: block; }
+
+  .detail-form-group {
+    margin-bottom: 12px;
+  }
+
+  .detail-form-group label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    color: #2d5a27;
+    margin-bottom: 5px;
+  }
+
+  .detail-form-group select {
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1.5px solid #c5ddc0;
+    font-size: 13px;
+    background: #fff;
+    outline: none;
+    font-family: inherit;
+  }
+
+  /* 読後感 */
+  .emotion-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .emotion-row input[type="radio"] { display: none; }
+
+  .emotion-row label {
+    font-size: 22px;
+    cursor: pointer;
+    opacity: 0.35;
+    transition: opacity 0.15s, transform 0.15s;
+  }
+
+  .emotion-row input[type="radio"]:checked + label {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+
+  /* 再読予定 */
+  .reread-row {
+    display: flex;
+    gap: 16px;
+  }
+
+  .reread-option {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 13px;
+    color: #333;
+    cursor: pointer;
+  }
+
+  /* リセット・検索ボタン */
+  .detail-search-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid #d8ecd4;
+  }
+
+  .btn-reset-search {
+    font-size: 12px;
+    color: #e53935;
+    text-decoration: none;
+    font-weight: 700;
+    cursor: pointer;
+    background: none;
+    border: none;
+  }
+
+  .btn-detail-search {
+    padding: 8px 18px;
+    background: linear-gradient(135deg, #5a9e4f, #3a7a2f);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  /* カテゴリタブ */
   .category-tabs {
     display: flex;
     gap: 4px;
@@ -77,7 +194,6 @@
 
   .total-count { font-size: 12px; color: #888; }
 
-  /* 表示切替ボタン */
   .view-toggle-btn {
     padding: 5px 10px;
     border: 1.5px solid #c5ddc0;
@@ -87,9 +203,6 @@
     color: #2d5a27;
     cursor: pointer;
     font-weight: 700;
-    display: flex;
-    align-items: center;
-    gap: 4px;
   }
 
   .view-toggle-btn.active {
@@ -117,10 +230,7 @@
     margin-bottom: 20px;
   }
 
-  .book-grid-item {
-    cursor: pointer;
-    text-decoration: none;
-  }
+  .book-grid-item { cursor: pointer; text-decoration: none; }
 
   .book-grid-cover {
     width: 100%;
@@ -184,7 +294,6 @@
   }
 
   .book-list-cover img { width: 100%; height: 100%; object-fit: cover; }
-
   .book-list-info { flex: 1; min-width: 0; }
 
   .book-list-title {
@@ -300,15 +409,107 @@
 
   .page-btn.active { background: #5a9e4f; color: #fff; border-color: #5a9e4f; }
   .page-btn:hover:not(.active) { background: #e0f0dc; }
+
+  /* 詳細検索中バッジ */
+  .detail-search-badge {
+    font-size: 11px;
+    color: #5a9e4f;
+    font-weight: 700;
+    margin-left: 4px;
+  }
 </style>
 
 <!-- 検索バー -->
-<form class="booklist-search-row" method="GET" action="{% url 'home' %}">
+<form class="booklist-search-row" id="main-search-form" method="GET" action="{% url 'home' %}">
   <input type="hidden" name="section" value="books">
   <input type="hidden" name="sort" value="{{ sort }}">
-  <input type="text" name="q" value="{{ q }}" placeholder="登録した本から検索（ワード）" required>
+  <input type="hidden" name="category" value="{{ category }}">
+  <input type="text" name="q" value="{{ q }}" placeholder="登録した本から検索（タイトル・著者）" required>
   <button type="submit" class="btn-booklist-search">🔍</button>
 </form>
+
+<!-- 詳細検索トグル -->
+<div class="detail-search-toggle">
+  <a onclick="toggleDetailSearch()">
+    詳細検索 <span id="detail-arrow">▼</span>
+    {% if genre_id or emotion != '' or status_id or reread_flag != '' %}
+      <span class="detail-search-badge">●条件あり</span>
+    {% endif %}
+  </a>
+</div>
+
+<!-- アコーディオンパネル -->
+<div class="detail-search-panel {% if genre_id or emotion != '' or status_id or reread_flag != '' %}open{% endif %}" id="detail-search-panel">
+  <form method="GET" action="{% url 'home' %}" id="detail-search-form">
+    <input type="hidden" name="section" value="books">
+    <input type="hidden" name="category" value="{{ category }}">
+    <input type="hidden" name="sort" value="{{ sort }}">
+    <input type="hidden" name="q" value="{{ q }}">
+
+    <!-- ジャンル -->
+    <div class="detail-form-group">
+      <label>ジャンル</label>
+      <select name="genre">
+        <option value="">-- すべて --</option>
+        {% for genre in genres %}
+          <option value="{{ genre.id }}" {% if genre_id == genre.id|stringformat:"s" %}selected{% endif %}>
+            {{ genre.name }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- 読後感 -->
+    <div class="detail-form-group">
+      <label>読後感</label>
+      <div class="emotion-row">
+        <input type="radio" name="emotion" id="de0" value="0" {% if emotion == '0' %}checked{% endif %}>
+        <label for="de0">😞</label>
+        <input type="radio" name="emotion" id="de1" value="1" {% if emotion == '1' %}checked{% endif %}>
+        <label for="de1">😐</label>
+        <input type="radio" name="emotion" id="de2" value="2" {% if emotion == '2' %}checked{% endif %}>
+        <label for="de2">🙂</label>
+        <input type="radio" name="emotion" id="de3" value="3" {% if emotion == '3' %}checked{% endif %}>
+        <label for="de3">😊</label>
+        <input type="radio" name="emotion" id="de4" value="4" {% if emotion == '4' %}checked{% endif %}>
+        <label for="de4">😍</label>
+      </div>
+    </div>
+
+    <!-- 状態タグ -->
+    <div class="detail-form-group">
+      <label>状態タグ</label>
+      <select name="status">
+        <option value="">-- すべて --</option>
+        {% for status in statuses %}
+          <option value="{{ status.id }}" {% if status_id == status.id|stringformat:"s" %}selected{% endif %}>
+            {{ status.name }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- 再読予定 -->
+    <div class="detail-form-group">
+      <label>再読予定</label>
+      <div class="reread-row">
+        <label class="reread-option">
+          <input type="radio" name="reread_flag" value="1" {% if reread_flag == '1' %}checked{% endif %}> する
+        </label>
+        <label class="reread-option">
+          <input type="radio" name="reread_flag" value="0" {% if reread_flag == '0' %}checked{% endif %}> しない
+        </label>
+      </div>
+    </div>
+
+    <div class="detail-search-actions">
+      <a class="btn-reset-search" href="{% url 'home' %}?section=books&category={{ category }}&sort={{ sort }}">
+        ×検索条件のリセット
+      </a>
+      <button type="submit" class="btn-detail-search">検索する</button>
+    </div>
+  </form>
+</div>
 
 <!-- カテゴリタブ -->
 <div class="category-tabs">
@@ -335,6 +536,10 @@
     <input type="hidden" name="section" value="books">
     <input type="hidden" name="category" value="{{ category }}">
     <input type="hidden" name="q" value="{{ q }}">
+    <input type="hidden" name="genre" value="{{ genre_id }}">
+    <input type="hidden" name="emotion" value="{{ emotion }}">
+    <input type="hidden" name="status" value="{{ status_id }}">
+    <input type="hidden" name="reread_flag" value="{{ reread_flag }}">
     <select class="sort-select" name="sort" onchange="this.form.submit()">
       <option value="created" {% if sort == 'created' %}selected{% endif %}>▼ 登録順</option>
       <option value="title" {% if sort == 'title' %}selected{% endif %}>▼ 50音順</option>
@@ -347,7 +552,6 @@
 {% if page_obj.object_list %}
 
   {% if is_search %}
-  <!-- 検索結果：リスト形式 -->
   <p class="search-result-label">検索結果（{{ page_obj.paginator.count }}件）</p>
   <div class="book-search-list">
     {% for book in page_obj %}
@@ -373,7 +577,6 @@
   </div>
 
   {% else %}
-  <!-- グリッド表示（デフォルト） -->
   <div class="book-grid" id="book-grid">
     {% for book in page_obj %}
       <a class="book-grid-item" href="{% url 'book_detail' book.id %}">
@@ -386,7 +589,6 @@
     {% endfor %}
   </div>
 
-  <!-- リスト表示（切替後） -->
   <div class="book-list" id="book-list" style="display:none;">
     {% for book in page_obj %}
       <a class="book-list-item" href="{% url 'book_detail' book.id %}">
@@ -403,7 +605,6 @@
   </div>
   {% endif %}
 
-  <!-- ページネーション -->
   {% if page_obj.paginator.num_pages > 1 %}
     <div class="pagination">
       {% if page_obj.has_previous %}
@@ -422,11 +623,8 @@
 {% else %}
   <div class="books-empty">
     <div style="font-size:40px;margin-bottom:10px;">📚</div>
-    {% if is_search %}
-      「{{ q }}」に一致する本が見つかりませんでした
-    {% else %}
-      まだ登録された本がありません
-    {% endif %}
+    {% if is_search %}「{{ q }}」に一致する本が見つかりませんでした
+    {% else %}まだ登録された本がありません{% endif %}
   </div>
 {% endif %}
 
@@ -439,7 +637,6 @@
     const list = document.getElementById('book-list');
     const btn = document.getElementById('view-toggle-btn');
     const label = document.getElementById('view-toggle-label');
-
     if (isListView) {
       grid.style.display = 'none';
       list.style.display = 'block';
@@ -452,4 +649,16 @@
       btn.classList.remove('active');
     }
   }
+
+  function toggleDetailSearch() {
+    const panel = document.getElementById('detail-search-panel');
+    const arrow = document.getElementById('detail-arrow');
+    panel.classList.toggle('open');
+    arrow.textContent = panel.classList.contains('open') ? '▲' : '▼';
+  }
+
+  // 条件ありの場合は最初から開く
+  {% if genre_id or emotion != '' or status_id or reread_flag != '' %}
+  document.getElementById('detail-arrow').textContent = '▲';
+  {% endif %}
 </script>

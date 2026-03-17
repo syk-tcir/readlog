@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+{% block content %}
+<style>
+  .mypage-wrap {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 20px 16px 40px;
+  }
+
+  .mypage-wrap h2 {
+    font-size: 16px;
+    font-weight: 800;
+    color: #2d5a27;
+    margin-bottom: 16px;
+  }
+
+  /* ユーザー情報カード */
+  .user-info-card {
+    background: #f6fbf5;
+    border: 1px solid #ddeedd;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+  }
+
+  .user-info-row {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 10px;
+  }
+
+  .user-info-row:last-child { margin-bottom: 0; }
+
+  .user-info-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #7a9a75;
+    margin-bottom: 2px;
+  }
+
+  .user-info-value {
+    font-size: 14px;
+    color: #333;
+    font-weight: 600;
+  }
+
+  /* メニューリンク */
+  .mypage-menu {
+    margin-bottom: 20px;
+  }
+
+  .mypage-menu-item {
+    display: block;
+    padding: 14px 16px;
+    background: #fff;
+    border: 1.5px solid #dde8dd;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 700;
+    color: #2d5a27;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+
+  .mypage-menu-item:hover {
+    background: #f0f8ee;
+  }
+
+  /* ログアウトボタン */
+  .btn-logout {
+    width: 100%;
+    padding: 13px;
+    background: #e53935;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 800;
+    cursor: pointer;
+  }
+
+  /* メッセージ */
+  .success-msg {
+    background: #e8f5e8;
+    border: 1px solid #5a9e4f;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 13px;
+    color: #2d5a27;
+    margin-bottom: 16px;
+    font-weight: 700;
+  }
+</style>
+
+<div class="mypage-wrap">
+  <h2>マイページ</h2>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="success-msg">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <!-- ユーザー情報 -->
+  <div class="user-info-card">
+    <div class="user-info-row">
+      <span class="user-info-label">名前</span>
+      <span class="user-info-value">{{ user.username }}</span>
+    </div>
+    <div class="user-info-row">
+      <span class="user-info-label">メールアドレス</span>
+      <span class="user-info-value">{{ user.email }}</span>
+    </div>
+    <div class="user-info-row">
+      <span class="user-info-label">登録日</span>
+      <span class="user-info-value">{{ user.date_joined|date:"Y/m/d" }}</span>
+    </div>
+  </div>
+
+  <!-- メニュー -->
+  <div class="mypage-menu">
+    <a class="mypage-menu-item" href="{% url 'account_edit' %}">
+      ✏️ アカウント情報変更
+    </a>
+    <a class="mypage-menu-item" href="{% url 'password_change' %}">
+      🔑 パスワード変更
+    </a>
+  </div>
+
+  <!-- ログアウト -->
+  <form method="POST" action="{% url 'logout' %}">
+    {% csrf_token %}
+    <button type="submit" class="btn-logout">ログアウト</button>
+  </form>
+</div>
+
+{% endblock %}

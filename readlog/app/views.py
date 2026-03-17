@@ -7,6 +7,7 @@ from django.core.paginator import Paginator
 from django.db.models import Q
 from .models import Book, ReadingRecord
 import requests
+import random
 
 
 @login_required
@@ -18,27 +19,68 @@ def index(request):
     # Google Books API検索（検索タブのみ）
     if query and section != 'books':
         url = "https://www.googleapis.com/books/v1/volumes"
-        params = {
-            'q': query,
-            'maxResults': 10,
-            'key': settings.GOOGLE_BOOKS_API_KEY,
-        }
-        try:
-            response = requests.get(url, params=params, timeout=5)
-            response.raise_for_status()
-            data = response.json()
-            if 'items' in data:
-                for item in data['items']:
-                    info = item.get('volumeInfo', {})
-                    books_list.append({
-                        'title': info.get('title', 'タイトル不明'),
-                        'authors': info.get('authors', ['著者不明']),
-                        'thumbnail': info.get('imageLinks', {}).get('thumbnail', ''),
-                        'google_id': item.get('id'),
-                        'description': info.get('description', 'あらすじ情報がありません。'),
-                    })
-        except Exception as e:
-            messages.error(request, f"検索中にエラーが発生しました: {e}")
+        all_items = []
+
+        # 2回に分けて取得（最大40件）
+        for start_index in [0, 20]:
+            params = {
+                'q': query,
+                'maxResults': 20,
+                'startIndex': start_index,
+                'key': settings.GOOGLE_BOOKS_API_KEY,
+            }
+            try:
+                response = requests.get(url, params=params, timeout=5)
+                response.raise_for_status()
+                data = response.json()
+                if 'items' in data:
+                    all_items.extend(data['items'])
+            except Exception as e:
+                messages.error(request, f"検索中にエラーが発生しました: {e}")
+
+        for item in all_items:
+            info = item.get('volumeInfo', {})
+            books_list.append({
+                'title': info.get('title', 'タイトル不明'),
+                'authors': info.get('authors', ['著者不明']),
+                'thumbnail': info.get('imageLinks', {}).get('thumbnail', ''),
+                'google_id': item.get('id'),
+                'description': info.get('description', 'あらすじ情報がありません。'),
+            })
+
+    # ランダム本表示（検索タブ用）
+    random_books = []
+    random_keywords = [
+        '人気小説', 'ベストセラー小説', '話題の本',
+        '恋愛小説', 'ミステリー小説', '青春小説',
+        '旅行エッセイ', '自己啓発', 'ビジネス書',
+        '料理レシピ', '歴史小説', 'SF小説',
+    ]
+    try:
+        rk = random.choice(random_keywords)
+        r_response = requests.get(
+            "https://www.googleapis.com/books/v1/volumes",
+            params={
+                'q': rk,
+                'maxResults': 20,
+                'langRestrict': 'ja',
+                'key': settings.GOOGLE_BOOKS_API_KEY,
+            },
+            timeout=5
+        )
+        r_response.raise_for_status()
+        r_data = r_response.json()
+        if 'items' in r_data:
+            items_with_thumb = [
+                item for item in r_data['items']
+                if item.get('volumeInfo', {}).get('imageLinks', {}).get('thumbnail')
+                and item.get('volumeInfo', {}).get('authors')
+                and item.get('volumeInfo', {}).get('publishedDate', '')[:4].isdigit()
+                and int(item.get('volumeInfo', {}).get('publishedDate', '0')[:4]) >= 2000
+            ]
+            random_books = random.sample(items_with_thumb, min(6, len(items_with_thumb)))
+    except Exception:
+        random_books = []
 
     # 本タブの処理
     category = request.GET.get('category', 'read')
@@ -46,7 +88,13 @@ def index(request):
     page = request.GET.get('page', 1)
     book_q = query if section == 'books' else ''
 
-    # 検索時は全カテゴリ横断でタイトル・著者を検索
+    # 詳細検索条件
+    genre_id = request.GET.get('genre', '')
+    emotion = request.GET.get('emotion', '')
+    status_id = request.GET.get('status', '')
+    reread_flag = request.GET.get('reread_flag', '')
+
+    # 検索時は全カテゴリ横断、通常時はカテゴリ絞り込み
     if book_q:
         my_books = Book.objects.filter(
             Q(user=request.user) &
@@ -54,6 +102,32 @@ def index(request):
         )
     else:
         my_books = Book.objects.filter(user=request.user, category=category)
+
+    # 詳細検索条件を適用
+    if genre_id:
+        my_books = my_books.filter(
+            google_book_id__in=ReadingRecord.objects.filter(
+                user=request.user, genre_id=genre_id
+            ).values('google_book_id')
+        )
+    if emotion != '':
+        my_books = my_books.filter(
+            google_book_id__in=ReadingRecord.objects.filter(
+                user=request.user, emotion=emotion
+            ).values('google_book_id')
+        )
+    if status_id:
+        my_books = my_books.filter(
+            google_book_id__in=ReadingRecord.objects.filter(
+                user=request.user, status_id=status_id
+            ).values('google_book_id')
+        )
+    if reread_flag != '':
+        my_books = my_books.filter(
+            google_book_id__in=ReadingRecord.objects.filter(
+                user=request.user, reread_flag=reread_flag
+            ).values('google_book_id')
+        )
 
     if sort == 'title':
         my_books = my_books.order_by('title')
@@ -63,6 +137,7 @@ def index(request):
     paginator = Paginator(my_books, 12)
     page_obj = paginator.get_page(page)
 
+    from .models import Genre, Status
     context = {
         'query': query,
         'books': books_list,
@@ -70,7 +145,14 @@ def index(request):
         'category': category,
         'sort': sort,
         'q': book_q,
-        'is_search': bool(book_q),
+        'is_search': bool(book_q) or bool(genre_id) or bool(emotion) or bool(status_id) or bool(reread_flag),
+        'genre_id': genre_id,
+        'emotion': emotion,
+        'status_id': status_id,
+        'reread_flag': reread_flag,
+        'genres': Genre.objects.all(),
+        'statuses': Status.objects.all(),
+        'random_books': random_books,
         'count_read': Book.objects.filter(user=request.user, category='read').count(),
         'count_reading': Book.objects.filter(user=request.user, category='reading').count(),
         'count_stacked': Book.objects.filter(user=request.user, category='stacked').count(),
@@ -87,7 +169,7 @@ def api_test(request):
         url = "https://www.googleapis.com/books/v1/volumes"
         params = {
             'q': query,
-            'maxResults': 10,
+            'maxResults': 20,
             'key': settings.GOOGLE_BOOKS_API_KEY,
         }
         try:
