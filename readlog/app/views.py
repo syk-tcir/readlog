@@ -6,8 +6,17 @@ from django.http import JsonResponse
 from django.core.paginator import Paginator
 from django.db.models import Q
 from .models import Book, ReadingRecord
+from datetime import date
 import requests
 import random
+
+
+def build_search_query(query):
+    """ISBNの場合はisbn:プレフィックスをつける"""
+    digits = query.replace('-', '')
+    if digits.isdigit() and len(digits) in [10, 13]:
+        return f'isbn:{query}'
+    return query
 
 
 @login_required
@@ -20,11 +29,11 @@ def index(request):
     if query and section != 'books':
         url = "https://www.googleapis.com/books/v1/volumes"
         all_items = []
+        search_query = build_search_query(query)
 
-        # 2回に分けて取得（最大40件）
         for start_index in [0, 20]:
             params = {
-                'q': query,
+                'q': search_query,
                 'maxResults': 20,
                 'startIndex': start_index,
                 'key': settings.GOOGLE_BOOKS_API_KEY,
@@ -48,7 +57,7 @@ def index(request):
                 'description': info.get('description', 'あらすじ情報がありません。'),
             })
 
-    # ランダム本表示（検索タブ用）
+    # ランダム本表示
     random_books = []
     random_keywords = [
         '人気小説', 'ベストセラー小説', '話題の本',
@@ -94,7 +103,6 @@ def index(request):
     status_id = request.GET.get('status', '')
     reread_flag = request.GET.get('reread_flag', '')
 
-    # 検索時は全カテゴリ横断、通常時はカテゴリ絞り込み
     if book_q:
         my_books = Book.objects.filter(
             Q(user=request.user) &
@@ -103,7 +111,6 @@ def index(request):
     else:
         my_books = Book.objects.filter(user=request.user, category=category)
 
-    # 詳細検索条件を適用
     if genre_id:
         my_books = my_books.filter(
             google_book_id__in=ReadingRecord.objects.filter(
@@ -223,13 +230,39 @@ def register_book(request):
 def book_register_detail(request):
     if request.method == 'POST':
         google_book_id = request.POST.get('google_book_id', '')
+        print("google_book_id:", google_book_id)
+        print("title:", request.POST.get('title'))
 
+        # 重複チェック
         from_edit = request.POST.get('from_edit', '')
         if not from_edit:
             if Book.objects.filter(user=request.user, google_book_id=google_book_id).exists():
                 messages.error(request, 'この本はすでに登録済みです')
                 return redirect('home')
 
+        # 日付バリデーション
+        read_date = request.POST.get('read_date')
+        if read_date:
+            try:
+                read_date_obj = date.fromisoformat(read_date)
+                if read_date_obj > date.today():
+                    messages.error(request, '読んだ日付は今日以前の日付を入力してください')
+                    from .models import Genre, Status
+                    context = {
+                        'google_book_id': request.POST.get('google_book_id', ''),
+                        'title': request.POST.get('title', ''),
+                        'author': request.POST.get('author', ''),
+                        'thumbnail_url': request.POST.get('thumbnail_url', ''),
+                        'description': request.POST.get('description', ''),
+                        'from_edit': request.POST.get('from_edit', ''),
+                        'genres': Genre.objects.all(),
+                        'statuses': Status.objects.all(),
+                    }
+                    return render(request, 'app/book_register_detail.html', context)
+            except ValueError:
+                pass
+
+        # Book を保存
         Book.objects.create(
             user=request.user,
             google_book_id=google_book_id,
@@ -240,14 +273,16 @@ def book_register_detail(request):
             category='read',
         )
 
+        # ReadingRecord を保存
+        emotion_val = request.POST.get('emotion', '')
         ReadingRecord.objects.create(
             user=request.user,
             google_book_id=google_book_id,
             genre_id=request.POST.get('genre') or None,
             status_id=request.POST.get('status') or None,
             read_date=request.POST.get('read_date') or None,
-            emotion=request.POST.get('emotion', 2),
-            reread_flag=request.POST.get('reread_flag', 0),
+            emotion=int(emotion_val) if emotion_val != '' else None,
+            reread_flag=1 if request.POST.get('reread_flag') else 0,
             impressive_text=request.POST.get('impressive_text', ''),
             memo=request.POST.get('memo', ''),
         )
@@ -365,12 +400,31 @@ def book_edit(request, book_id):
     ).first()
 
     if request.method == 'POST':
+        # 日付バリデーション
+        read_date = request.POST.get('read_date')
+        if read_date:
+            try:
+                read_date_obj = date.fromisoformat(read_date)
+                if read_date_obj > date.today():
+                    messages.error(request, '読んだ日付は今日以前の日付を入力してください')
+                    from .models import Genre, Status
+                    context = {
+                        'book': book,
+                        'reading_record': reading_record,
+                        'genres': Genre.objects.all(),
+                        'statuses': Status.objects.all(),
+                    }
+                    return render(request, 'app/book_edit.html', context)
+            except ValueError:
+                pass
+
         if reading_record:
             reading_record.genre_id = request.POST.get('genre') or None
             reading_record.status_id = request.POST.get('status') or None
             reading_record.read_date = request.POST.get('read_date') or None
-            reading_record.emotion = request.POST.get('emotion', 2)
-            reading_record.reread_flag = request.POST.get('reread_flag', 0)
+            emotion_val = request.POST.get('emotion', '')
+            reading_record.emotion = int(emotion_val) if emotion_val != '' else None
+            reading_record.reread_flag = 1 if request.POST.get('reread_flag') else 0
             reading_record.impressive_text = request.POST.get('impressive_text', '')
             reading_record.memo = request.POST.get('memo', '')
             reading_record.save()

@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import login, get_user_model
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.contrib.auth import logout
 
 User = get_user_model()  # CustomUserを取得
 
@@ -74,3 +75,7 @@ def account_edit(request):
         return redirect('mypage')
 
     return render(request, 'accounts/account_edit.html')
+
+def password_change_done_view(request):
+    logout(request)  # ログアウトさせる
+    return render(request, 'registration/password_change_done.html')

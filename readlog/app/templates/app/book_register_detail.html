@@ -138,6 +138,26 @@
     opacity: 1;
     transform: scale(1.25);
   }
+  .emotion-btn {
+  font-size: 24px;
+  cursor: pointer;
+  opacity: 0.35;
+  transition: opacity 0.15s, transform 0.15s;
+  display: inline-block;
+}
+.emotion-btn.selected {
+  opacity: 1;
+  transform: scale(1.25);
+}
+.btn-clear-emotion {
+  font-size: 11px;
+  color: #888;
+  background: none;
+  border: none;
+  cursor: pointer;
+  margin-left: 4px;
+  padding: 0;
+}
 
   /* 再読予定ラジオ */
   .reread-row {
@@ -251,16 +271,13 @@
     <div class="form-group">
       <label>読後感 <span class="optional-badge">任意</span></label>
       <div class="emotion-row">
-        <input type="radio" name="emotion" id="e0" value="0">
-        <label for="e0">😞</label>
-        <input type="radio" name="emotion" id="e1" value="1">
-        <label for="e1">😐</label>
-        <input type="radio" name="emotion" id="e2" value="2" checked>
-        <label for="e2">🙂</label>
-        <input type="radio" name="emotion" id="e3" value="3">
-        <label for="e3">😊</label>
-        <input type="radio" name="emotion" id="e4" value="4">
-        <label for="e4">😍</label>
+        <span data-val="0" onclick="selectEmotion(this)" class="emotion-btn">😞</span>
+        <span data-val="1" onclick="selectEmotion(this)" class="emotion-btn">😐</span>
+        <span data-val="2" onclick="selectEmotion(this)" class="emotion-btn">🙂</span>
+        <span data-val="3" onclick="selectEmotion(this)" class="emotion-btn">😊</span>
+        <span data-val="4" onclick="selectEmotion(this)" class="emotion-btn">😍</span>
+        <button type="button" onclick="clearEmotion()" class="btn-clear-emotion">クリア</button>
+        <input type="hidden" name="emotion" id="emotion-val" value="">
       </div>
     </div>
 
@@ -280,10 +297,7 @@
       <label>再読予定 <span class="optional-badge">任意</span></label>
       <div class="reread-row">
         <label class="reread-option">
-          <input type="radio" name="reread_flag" value="1"> する
-        </label>
-        <label class="reread-option">
-          <input type="radio" name="reread_flag" value="0" checked> しない
+          <input type="checkbox" name="reread_flag" value="1"> する
         </label>
       </div>
     </div>
@@ -313,6 +327,15 @@
     } else {
       dateInput.disabled = false;
     }
+  }
+  function selectEmotion(el) {
+  document.querySelectorAll('.emotion-btn').forEach(s => s.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('emotion-val').value = el.dataset.val;
+  }
+  function clearEmotion() {
+    document.querySelectorAll('.emotion-btn').forEach(s => s.classList.remove('selected'));
+    document.getElementById('emotion-val').value = '';
   }
 </script>
 

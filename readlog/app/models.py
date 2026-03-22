@@ -32,12 +32,12 @@ class ReadingRecord(models.Model):
         verbose_name_plural = "読んだ本"
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    genre = models.ForeignKey("Genre", on_delete=models.PROTECT)
-    status = models.ForeignKey("Status", on_delete=models.PROTECT)
+    genre = models.ForeignKey("Genre", on_delete=models.PROTECT, null=True, blank=True)
+    status = models.ForeignKey("Status", on_delete=models.PROTECT, null=True, blank=True)
     google_book_id = models.CharField(max_length=255, blank=True, null=True)
-    read_date = models.DateField()
-    emotion = models.IntegerField(default=2) 
-    reread_flag = models.IntegerField(default=0)
+    read_date = models.DateField(null=True, blank=True)
+    emotion = models.IntegerField(default=2, null=True, blank=True) 
+    reread_flag = models.IntegerField(default=0, null=True, blank=True)
     
     impressive_text = models.TextField(blank=True, null=True)
     memo = models.TextField(blank=True, null=True)

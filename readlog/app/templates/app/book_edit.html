@@ -14,7 +14,6 @@
     margin-bottom: 16px;
   }
 
-  /* 書籍プレビュー */
   .book-preview {
     display: flex;
     gap: 14px;
@@ -40,11 +39,7 @@
     border: 1px solid #cce0cc;
   }
 
-  .book-preview-cover img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
+  .book-preview-cover img { width: 100%; height: 100%; object-fit: cover; }
 
   .book-preview-info h3 {
     font-size: 14px;
@@ -59,10 +54,7 @@
     margin-top: 4px;
   }
 
-  /* フォーム */
-  .form-group {
-    margin-bottom: 16px;
-  }
+  .form-group { margin-bottom: 16px; }
 
   .form-group label {
     display: block;
@@ -88,16 +80,16 @@
 
   .form-group input[type="date"]:focus,
   .form-group select:focus,
-  .form-group textarea:focus {
-    border-color: #5a9e4f;
+  .form-group textarea:focus { border-color: #5a9e4f; }
+
+  .form-group input[type="date"].disabled-date {
+    background: #eee;
+    color: #aaa;
+    pointer-events: none;
   }
 
-  .form-group textarea {
-    resize: vertical;
-    min-height: 80px;
-  }
+  .form-group textarea { resize: vertical; min-height: 80px; }
 
-  /* 不明チェックボックス */
   .date-row {
     display: flex;
     align-items: center;
@@ -116,33 +108,20 @@
     cursor: pointer;
   }
 
-  /* 読後感 */
-  .emotion-row {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-  }
-
+  .emotion-row { display: flex; gap: 8px; align-items: center; }
   .emotion-row input[type="radio"] { display: none; }
-
   .emotion-row label {
     font-size: 24px;
     cursor: pointer;
     opacity: 0.35;
     transition: opacity 0.15s, transform 0.15s;
   }
-
   .emotion-row input[type="radio"]:checked + label {
     opacity: 1;
     transform: scale(1.25);
   }
 
-  /* 再読予定 */
-  .reread-row {
-    display: flex;
-    gap: 16px;
-  }
-
+  .reread-row { display: flex; gap: 16px; }
   .reread-option {
     display: flex;
     align-items: center;
@@ -159,18 +138,9 @@
     margin-left: 4px;
   }
 
-  .divider {
-    height: 1px;
-    background: #eaf2ea;
-    margin: 16px 0;
-  }
+  .divider { height: 1px; background: #eaf2ea; margin: 16px 0; }
 
-  /* ボタン */
-  .action-buttons {
-    display: flex;
-    gap: 10px;
-    margin-top: 20px;
-  }
+  .action-buttons { display: flex; gap: 10px; margin-top: 20px; }
 
   .btn-update {
     flex: 2;
@@ -206,13 +176,46 @@
     text-decoration: none;
     margin-bottom: 16px;
   }
+
+  .error-msg {
+    background: #fff0f0;
+    border: 1px solid #e88;
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 16px;
+    color: #c00;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .emotion-btn {
+  font-size: 24px;
+  cursor: pointer;
+  opacity: 0.35;
+  transition: opacity 0.15s, transform 0.15s;
+  display: inline-block;
+}
+
+.emotion-btn.selected {
+  opacity: 1;
+  transform: scale(1.25);
+}
+
+.btn-clear-emotion {
+  font-size: 11px;
+  color: #888;
+  background: none;
+  border: none;
+  cursor: pointer;
+  margin-left: 4px;
+  padding: 0;
+}
 </style>
 
 <div class="edit-wrap">
   <a class="back-link" href="{% url 'book_detail' book.id %}">← 詳細に戻る</a>
   <h2>📝 読んだ本を編集する</h2>
 
-  <!-- 書籍プレビュー（編集不可） -->
   <div class="book-preview">
     <div class="book-preview-cover">
       {% if book.thumbnail_url %}
@@ -227,7 +230,12 @@
     </div>
   </div>
 
-  <!-- 編集フォーム -->
+  {% if messages %}
+    {% for message in messages %}
+      <div class="error-msg">⚠️ {{ message }}</div>
+    {% endfor %}
+  {% endif %}
+
   <form method="POST" action="{% url 'book_edit' book.id %}">
     {% csrf_token %}
 
@@ -235,12 +243,19 @@
     <div class="form-group">
       <label>日付</label>
       <div class="date-row">
+        <!-- disabledを使わずhidden inputで制御 -->
         <input
           type="date"
-          name="read_date"
-          id="read-date"
+          id="read-date-display"
           value="{% if reading_record.read_date %}{{ reading_record.read_date|date:'Y-m-d' }}{% endif %}"
-          {% if not reading_record.read_date %}disabled{% endif %}
+          {% if not reading_record.read_date %}class="disabled-date"{% endif %}
+          oninput="syncDate(this.value)"
+        >
+        <input
+          type="hidden"
+          name="read_date"
+          id="read-date-hidden"
+          value="{% if reading_record.read_date %}{{ reading_record.read_date|date:'Y-m-d' }}{% endif %}"
         >
         <label class="unknown-label">
           <input
@@ -274,16 +289,14 @@
     <div class="form-group">
       <label>読後感 <span class="optional-badge">任意</span></label>
       <div class="emotion-row">
-        <input type="radio" name="emotion" id="e0" value="0" {% if reading_record.emotion == 0 %}checked{% endif %}>
-        <label for="e0">😞</label>
-        <input type="radio" name="emotion" id="e1" value="1" {% if reading_record.emotion == 1 %}checked{% endif %}>
-        <label for="e1">😐</label>
-        <input type="radio" name="emotion" id="e2" value="2" {% if reading_record.emotion == 2 %}checked{% endif %}>
-        <label for="e2">🙂</label>
-        <input type="radio" name="emotion" id="e3" value="3" {% if reading_record.emotion == 3 %}checked{% endif %}>
-        <label for="e3">😊</label>
-        <input type="radio" name="emotion" id="e4" value="4" {% if reading_record.emotion == 4 %}checked{% endif %}>
-        <label for="e4">😍</label>
+        <span data-val="0" onclick="selectEmotion(this)" class="emotion-btn {% if reading_record.emotion == 0 %}selected{% endif %}">😞</span>
+        <span data-val="1" onclick="selectEmotion(this)" class="emotion-btn {% if reading_record.emotion == 1 %}selected{% endif %}">😐</span>
+        <span data-val="2" onclick="selectEmotion(this)" class="emotion-btn {% if reading_record.emotion == 2 %}selected{% endif %}">🙂</span>
+        <span data-val="3" onclick="selectEmotion(this)" class="emotion-btn {% if reading_record.emotion == 3 %}selected{% endif %}">😊</span>
+        <span data-val="4" onclick="selectEmotion(this)" class="emotion-btn {% if reading_record.emotion == 4 %}selected{% endif %}">😍</span>
+        <button type="button" onclick="clearEmotion()" class="btn-clear-emotion">クリア</button>
+        <input type="hidden" name="emotion" id="emotion-val" 
+          value="{% if reading_record.emotion is not None %}{{ reading_record.emotion }}{% endif %}">
       </div>
     </div>
 
@@ -306,12 +319,8 @@
       <label>再読予定 <span class="optional-badge">任意</span></label>
       <div class="reread-row">
         <label class="reread-option">
-          <input type="radio" name="reread_flag" value="1"
+          <input type="checkbox" name="reread_flag" value="1"
             {% if reading_record.reread_flag == 1 %}checked{% endif %}> する
-        </label>
-        <label class="reread-option">
-          <input type="radio" name="reread_flag" value="0"
-            {% if reading_record.reread_flag == 0 %}checked{% endif %}> しない
         </label>
       </div>
     </div>
@@ -328,7 +337,6 @@
       <textarea name="memo" placeholder="感想や気づきなど自由に...">{% if reading_record.memo %}{{ reading_record.memo }}{% endif %}</textarea>
     </div>
 
-    <!-- 更新・削除ボタン -->
     <div class="action-buttons">
       <button type="submit" class="btn-update">更新する</button>
       <button type="button" class="btn-delete" onclick="confirmDelete()">削除</button>
@@ -336,19 +344,32 @@
   </form>
 </div>
 
-<!-- 削除確認フォーム -->
 <form id="delete-form" method="POST" action="{% url 'book_delete' book.id %}" style="display:none;">
   {% csrf_token %}
 </form>
 
 <script>
+  function syncDate(value) {
+    document.getElementById('read-date-hidden').value = value;
+  }
+
   function toggleDate(checkbox) {
-    const dateInput = document.getElementById('read-date');
+    const displayInput = document.getElementById('read-date-display');
+    const hiddenInput = document.getElementById('read-date-hidden');
+
     if (checkbox.checked) {
-      dateInput.value = '';
-      dateInput.disabled = true;
+      // 不明にする → 日付をクリア
+      displayInput.value = '';
+      hiddenInput.value = '';
+      displayInput.classList.add('disabled-date');
+      displayInput.style.pointerEvents = 'none';
     } else {
-      dateInput.disabled = false;
+      // 不明を解除 → 今日の日付をセット
+      const today = new Date().toISOString().split('T')[0];
+      displayInput.value = today;
+      hiddenInput.value = today;
+      displayInput.classList.remove('disabled-date');
+      displayInput.style.pointerEvents = 'auto';
     }
   }
 
@@ -357,6 +378,15 @@
       document.getElementById('delete-form').submit();
     }
   }
+  function selectEmotion(el) {
+  document.querySelectorAll('.emotion-btn').forEach(s => s.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('emotion-val').value = el.dataset.val;
+}
+function clearEmotion() {
+  document.querySelectorAll('.emotion-btn').forEach(s => s.classList.remove('selected'));
+  document.getElementById('emotion-val').value = '';
+}
 </script>
 
 {% endblock %}
