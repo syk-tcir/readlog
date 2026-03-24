@@ -203,7 +203,7 @@
     {% if reading_record.impressive_text %}
     <div class="info-row">
       <span class="info-label">印象に残ったところ</span>
-      <span class="info-value">{{ reading_record.impressive_text }}</span>
+      <span class="info-value" style="white-space: pre-wrap;">{{ reading_record.impressive_text }}</span>
     </div>
     {% endif %}
 
@@ -211,7 +211,7 @@
     {% if reading_record.memo %}
     <div class="info-row">
       <span class="info-label">自由記述</span>
-      <span class="info-value">{{ reading_record.memo }}</span>
+      <span class="info-value" style="white-space: pre-wrap;">{{ reading_record.memo }}</span>
     </div>
     {% endif %}
   </div>

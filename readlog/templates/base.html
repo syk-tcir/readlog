@@ -42,18 +42,7 @@
 <body>
 
     <header>
-        <a href="{% url 'home' %}" style="text-decoration: none; font-weight: bold; color: #333;">ReadLog</a>
-        {% if user.is_authenticated %}
-            <div style="font-size: 12px;">
-                {{ user.username }}さん 
-                <button onclick="document.getElementById('logout-form').submit()" 
-                        style="background: none; border: none; color: #888; text-decoration: underline; font-size: 11px; cursor: pointer;">
-                    ログアウト
-                </button>
-            </div>
-        {% else %}
-            <a href="{% url 'login' %}" style="font-size: 12px;">ログイン</a>
-        {% endif %}
+        <span style="font-weight: bold; color: #333;">ReadLog</span>
     </header>
 
     <form id="logout-form" action="{% url 'logout' %}" method="post" style="display:none;">

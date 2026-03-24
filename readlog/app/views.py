@@ -238,7 +238,7 @@ def book_register_detail(request):
         if not from_edit:
             if Book.objects.filter(user=request.user, google_book_id=google_book_id).exists():
                 messages.error(request, 'この本はすでに登録済みです')
-                return redirect('home')
+                return redirect(f"{'/'}?section=books&category=read")
 
         # 日付バリデーション
         read_date = request.POST.get('read_date')
@@ -286,7 +286,7 @@ def book_register_detail(request):
             impressive_text=request.POST.get('impressive_text', ''),
             memo=request.POST.get('memo', ''),
         )
-        return redirect('home')
+        return redirect('/?section=books&category=read')
 
     from .models import Genre, Status
     context = {
@@ -385,7 +385,7 @@ def book_edit(request, book_id):
                     'description': description,
                     'from_edit': '1',
                 })
-                return redirect(f"/books/register/detail/?{params}")
+                return redirect("home")
 
             if new_category:
                 book.category = new_category

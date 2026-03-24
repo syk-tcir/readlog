@@ -74,7 +74,7 @@
       text-align: center;
       font-size: 13px;
     }
-    .links a { color: #5a9e4f; font-weight: 700; text-decoration: none; }
+    .links a { color: #1a73e8; font-weight: 700; text-decoration: none; }
   </style>
 </head>
 <body>
@@ -100,8 +100,8 @@
   </form>
 
   <div class="links">
-    <a href="{% url 'password_reset' %}">パスワードを忘れた方はこちら</a>
-    <a href="{% url 'register' %}">アカウント登録はこちら</a>
+    <p>パスワードを忘れた方は<a href="{% url 'password_reset' %}">こちら</a></p>
+    <p>アカウント登録は<a href="{% url 'register' %}">こちら</a></p>
   </div>
 </div>
 </body>
