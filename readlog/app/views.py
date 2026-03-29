@@ -286,7 +286,8 @@ def book_register_detail(request):
             impressive_text=request.POST.get('impressive_text', ''),
             memo=request.POST.get('memo', ''),
         )
-        return redirect('/?section=books&category=read')
+        book = Book.objects.filter(user=request.user, google_book_id=google_book_id).last()
+        return redirect('book_detail', book_id=book.id)
 
     from .models import Genre, Status
     context = {

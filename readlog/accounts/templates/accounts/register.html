@@ -80,7 +80,7 @@
       color: #888;
     }
     .login-link a {
-      color: #5a9e4f;
+      color: #1a73e8;
       font-weight: 700;
       text-decoration: none;
     }
@@ -110,11 +110,11 @@
     {% csrf_token %}
     <div class="form-group">
       <label>名前</label>
-      <input type="text" name="username" placeholder="ハム星" value="{{ request.POST.username }}" required>
+      <input type="text" name="username" placeholder="" value="{{ request.POST.username }}" required>
     </div>
     <div class="form-group">
       <label>メールアドレス</label>
-      <input type="email" name="email" placeholder="test@test.com" value="{{ request.POST.email }}" required>
+      <input type="email" name="email" placeholder="mail@example.com" value="{{ request.POST.email }}" required>
     </div>
     <div class="form-group">
       <label>パスワード</label>

@@ -154,29 +154,42 @@
   /* カテゴリタブ */
   .category-tabs {
     display: flex;
-    gap: 4px;
+    gap: 0;
     margin-bottom: 12px;
-    border-bottom: 2px solid #e0ede0;
+    border-bottom: none;
   }
 
   .category-tab {
-    padding: 8px 12px;
+    padding: 8px 16px;
     font-size: 12px;
     font-weight: 700;
-    color: #7a9a75;
-    background: none;
-    border: none;
+    color: #555;
+    background: #e8ede8;
+    border: 1px solid #c5ddc0;
     cursor: pointer;
-    border-bottom: 2px solid transparent;
-    margin-bottom: -2px;
+    margin-bottom: 0;
     text-decoration: none;
     white-space: nowrap;
+    border-radius: 0;
+  }
+
+  .category-tab:first-child {
+    border-radius: 6px 0 0 6px;
+  }
+
+  .category-tab:last-child {
+    border-radius: 0 6px 6px 0;
   }
 
   .category-tab.active {
-    color: #2d5a27;
-    border-bottom: 2px solid #5a9e4f;
+    background: #5a9e4f;
+    color: #fff;
+    border-color: #5a9e4f;
   }
+  .tab-read.active    { background: #7a9eb5; border-color: #7a9eb5; color: #fff; }
+  .tab-reading.active { background: #8aaa78; border-color: #8aaa78; color: #fff; }
+  .tab-stacked.active { background: #b0957a; border-color: #b0957a; color: #fff; }
+  .tab-want.active    { background: #b0b090; border-color: #b0b090; color: #fff; }
 
   /* コントロールバー */
   .list-control-bar {
@@ -417,6 +430,18 @@
     font-weight: 700;
     margin-left: 4px;
   }
+
+  .btn-clear-emotion {
+  font-size: 12px;
+  color: #5a9e4f;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+  margin-left: 4px;
+}
+  
 </style>
 
 <!-- 検索バー -->
@@ -463,16 +488,13 @@
     <div class="detail-form-group">
       <label>読後感</label>
       <div class="emotion-row">
-        <input type="radio" name="emotion" id="de0" value="0" {% if emotion == '0' %}checked{% endif %}>
-        <label for="de0">😞</label>
-        <input type="radio" name="emotion" id="de1" value="1" {% if emotion == '1' %}checked{% endif %}>
-        <label for="de1">😐</label>
-        <input type="radio" name="emotion" id="de2" value="2" {% if emotion == '2' %}checked{% endif %}>
-        <label for="de2">🙂</label>
-        <input type="radio" name="emotion" id="de3" value="3" {% if emotion == '3' %}checked{% endif %}>
-        <label for="de3">😊</label>
-        <input type="radio" name="emotion" id="de4" value="4" {% if emotion == '4' %}checked{% endif %}>
-        <label for="de4">😍</label>
+        <span data-val="0" onclick="selectDetailEmotion(this)" class="emotion-btn {% if emotion == '0' %}selected{% endif %}">😞</span>
+        <span data-val="1" onclick="selectDetailEmotion(this)" class="emotion-btn {% if emotion == '1' %}selected{% endif %}">😐</span>
+        <span data-val="2" onclick="selectDetailEmotion(this)" class="emotion-btn {% if emotion == '2' %}selected{% endif %}">🙂</span>
+        <span data-val="3" onclick="selectDetailEmotion(this)" class="emotion-btn {% if emotion == '3' %}selected{% endif %}">😊</span>
+        <span data-val="4" onclick="selectDetailEmotion(this)" class="emotion-btn {% if emotion == '4' %}selected{% endif %}">🤩</span>
+        <button type="button" onclick="clearDetailEmotion()" class="btn-clear-emotion">クリア</button>
+        <input type="hidden" name="emotion" id="detail-emotion-val" value="{{ emotion }}">
       </div>
     </div>
 
@@ -494,10 +516,8 @@
       <label>再読予定</label>
       <div class="reread-row">
         <label class="reread-option">
-          <input type="radio" name="reread_flag" value="1" {% if reread_flag == '1' %}checked{% endif %}> する
-        </label>
-        <label class="reread-option">
-          <input type="radio" name="reread_flag" value="0" {% if reread_flag == '0' %}checked{% endif %}> しない
+          <input type="checkbox" name="reread_flag" value="1"
+            {% if reread_flag == '1' %}checked{% endif %}> する
         </label>
       </div>
     </div>
@@ -513,13 +533,13 @@
 
 <!-- カテゴリタブ -->
 <div class="category-tabs">
-  <a class="category-tab {% if category == 'read' %}active{% endif %}"
+  <a class="category-tab tab-read {% if category == 'read' %}active{% endif %}"
      href="{% url 'home' %}?section=books&category=read&sort={{ sort }}">読んだ本</a>
-  <a class="category-tab {% if category == 'reading' %}active{% endif %}"
+  <a class="category-tab tab-reading {% if category == 'reading' %}active{% endif %}"
      href="{% url 'home' %}?section=books&category=reading&sort={{ sort }}">読んでる本</a>
-  <a class="category-tab {% if category == 'stacked' %}active{% endif %}"
+  <a class="category-tab tab-stacked {% if category == 'stacked' %}active{% endif %}"
      href="{% url 'home' %}?section=books&category=stacked&sort={{ sort }}">積読本</a>
-  <a class="category-tab {% if category == 'want' %}active{% endif %}"
+  <a class="category-tab tab-want {% if category == 'want' %}active{% endif %}"
      href="{% url 'home' %}?section=books&category=want&sort={{ sort }}">読みたい本</a>
 </div>
 
@@ -656,6 +676,16 @@
     panel.classList.toggle('open');
     arrow.textContent = panel.classList.contains('open') ? '▲' : '▼';
   }
+  function selectDetailEmotion(el) {
+  document.querySelectorAll('#detail-search-panel .emotion-btn').forEach(s => s.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('detail-emotion-val').value = el.dataset.val;
+}
+
+function clearDetailEmotion() {
+  document.querySelectorAll('#detail-search-panel .emotion-btn').forEach(s => s.classList.remove('selected'));
+  document.getElementById('detail-emotion-val').value = '';
+}
 
   // 条件ありの場合は最初から開く
   {% if genre_id or emotion != '' or status_id or reread_flag != '' %}

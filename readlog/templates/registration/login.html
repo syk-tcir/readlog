@@ -80,7 +80,7 @@
 <body>
 <div class="card">
   <h1>ReadLog</h1>
-  <h2>ログイン</h2>
+  <h2></h2>
 
   {% if form.errors %}
     <div class="error-msg">メールアドレスまたはパスワードが正しくありません</div>
@@ -90,7 +90,7 @@
     {% csrf_token %}
     <div class="form-group">
       <label>メールアドレス</label>
-      <input type="email" name="username" placeholder="test@test.com" required>
+      <input type="email" name="username" placeholder="mail@example.com" required>
     </div>
     <div class="form-group">
       <label>パスワード</label>
