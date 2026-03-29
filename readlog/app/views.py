@@ -452,3 +452,6 @@ def book_delete(request, book_id):
         book.delete()
         return redirect('home')
     return redirect('book_detail', book_id=book_id)
+
+def top(request):
+    return render(request, 'top.html')

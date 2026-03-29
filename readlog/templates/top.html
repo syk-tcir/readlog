@@ -1,0 +1,114 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>作品No.1 ReadLog</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+      background: #f5f5f5;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 40px 16px 60px;
+    }
+    .container {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      width: 100%;
+      max-width: 680px;
+      padding: 40px 40px 48px;
+    }
+    .work-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #333;
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    /* スクショエリア */
+    .screenshot-box {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .screenshot-box img {
+      width: 50%;
+      height: auto;
+      display: block;
+      border-radius: 4px;
+    }
+    /* 概要文 */
+    .description {
+      font-size: 14px;
+      line-height: 1.9;
+      color: #444;
+      margin-bottom: 24px;
+    }
+    /* ドキュメントリンク */
+    .doc-links {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+    }
+    .doc-link {
+      font-size: 14px;
+      color: #1a73e8;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+    /* アクセスボタン */
+    .access-btn-wrap {
+      text-align: center;
+    }
+    .btn-access {
+      display: inline-block;
+      padding: 12px 36px;
+      background: #4a90d9;
+      color: #fff;
+      border-radius: 4px;
+      font-size: 15px;
+      font-weight: 700;
+      text-decoration: none;
+    }
+    .btn-access:hover {
+      background: #3a7bc8;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1 class="work-title">作品No.1 ReadLog</h1>
+  <!-- スクショエリア -->
+  <div class="screenshot-box">
+    <img src="{% static 'images/screenshot_01.png' %}" alt="ReadLogスクリーンショット1">
+    <img src="{% static 'images/screenshot_02.png' %}" alt="ReadLogスクリーンショット2">
+  </div>
+  <!-- 概要文 -->
+  <p class="description">
+    ReadLogは、読書中や読書直後の気づきを素早く残し、あとから振り返って実生活や学びに活かすことに特化した読書記録アプリです。読書中に心に残った一文や考えを、思ったその瞬間にサッと記録できるため、読書の流れを止めることなく気づきやひらめきを残すことができます。
+    <br>
+  </p>
+  <!-- ドキュメントリンク -->
+  <div class="doc-links">
+  <a class="doc-link" href="{% static 'docs/kikakusho.pdf' %}" target="_blank">企画書</a>
+  <a class="doc-link" href="{% static 'docs/gamen_sekkei.pdf' %}" target="_blank">画面設計図</a>
+  <a class="doc-link" href="{% static 'docs/gamen_seni.svg' %}" target="_blank">画面遷移図</a>
+  <a class="doc-link" href="{% static 'docs/er.svg' %}" target="_blank">ER図</a>
+  </div>
+
+  <!-- アクセスボタン -->
+  <div class="access-btn-wrap">
+    <a class="btn-access" href="{% url 'login' %}">このアプリにアクセス</a>
+  </div>
+</div>
+</body>
+</html>
