@@ -287,6 +287,7 @@ def book_register_detail(request):
             memo=request.POST.get('memo', ''),
         )
         book = Book.objects.filter(user=request.user, google_book_id=google_book_id).last()
+        messages.success(request, f'「{book.title}」を登録しました！')
         return redirect('book_detail', book_id=book.id)
 
     from .models import Genre, Status
