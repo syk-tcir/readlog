@@ -387,7 +387,7 @@ def book_edit(request, book_id):
                     'description': description,
                     'from_edit': '1',
                 })
-                return redirect("home")
+                return redirect(f"/books/register/detail/?{params}")
 
             if new_category:
                 book.category = new_category
