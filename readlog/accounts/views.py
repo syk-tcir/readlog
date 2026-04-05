@@ -153,7 +153,7 @@ def custom_password_reset_confirm(request, uidb64, token):
                 return render(request, 'registration/password_reset_confirm.html', {'validlink': True})
             user.set_password(password1)
             user.save()
-            return redirect('custom_password_reset_complete')
+            return redirect('password_reset_complete')
         return render(request, 'registration/password_reset_confirm.html', {'validlink': True})
     else:
         return render(request, 'registration/password_reset_confirm.html', {'validlink': False})
