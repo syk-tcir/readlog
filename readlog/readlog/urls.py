@@ -9,7 +9,7 @@ urlpatterns = [
              success_url='/accounts/password_change/done/'
          ),
          name='password_change'),
-    path('accounts/', include('django.contrib.auth.urls')),
     path('accounts/', include('accounts.urls')),
+    path('accounts/', include('django.contrib.auth.urls')),
     path('', include('app.urls')),
 ]

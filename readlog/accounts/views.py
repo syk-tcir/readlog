@@ -3,8 +3,13 @@ from django.contrib.auth import login, get_user_model
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.contrib.auth import logout
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes, force_str
+from django.conf import settings
+import requests as http_requests
 
-User = get_user_model()  # CustomUserを取得
+User = get_user_model()
 
 
 def register(request):
@@ -39,8 +44,7 @@ def register(request):
             email=email,
             password=password1,
         )
-        login(request, user)
-        return redirect('home')
+        return redirect('login')
 
     return render(request, 'accounts/register.html')
 
@@ -76,6 +80,84 @@ def account_edit(request):
 
     return render(request, 'accounts/account_edit.html')
 
+
 def password_change_done_view(request):
-    logout(request)  # ログアウトさせる
+    logout(request)
     return render(request, 'registration/password_change_done.html')
+
+
+def custom_password_reset(request):
+    if request.method == 'POST':
+        email = request.POST.get('email', '').strip()
+        try:
+            user = User.objects.get(email=email)
+            # トークン生成
+            token = default_token_generator.make_token(user)
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+            # リセットURL生成
+            domain = request.get_host()
+            reset_url = f"https://{domain}/accounts/reset/{uid}/{token}/"
+            # Brevo APIでメール送信
+            api_key = settings.BREVO_API_KEY
+            response = http_requests.post(
+                'https://api.brevo.com/v3/smtp/email',
+                headers={
+                    'api-key': api_key,
+                    'Content-Type': 'application/json',
+                },
+                json={
+                    'sender': {'name': 'ReadLog', 'email': 'sykt.819@gmail.com'},
+                    'to': [{'email': email}],
+                    'subject': 'ReadLog パスワード再設定',
+                    'textContent': f'''
+パスワード再設定のリクエストを受け付けました。
+
+以下のURLからパスワードを再設定してください：
+
+{reset_url}
+
+このメールに心当たりがない場合は無視してください。
+
+ReadLog
+                    ''',
+                }
+            )
+        except User.DoesNotExist:
+            pass  # メールが存在しない場合も同じ画面を表示（セキュリティ対策）
+
+        return redirect('custom_password_reset_done')
+
+    return render(request, 'registration/password_reset_form.html')
+
+
+def custom_password_reset_done(request):
+    return render(request, 'registration/password_reset_done.html')
+
+
+def custom_password_reset_confirm(request, uidb64, token):
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        user = User.objects.get(pk=uid)
+    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+        user = None
+
+    if user is not None and default_token_generator.check_token(user, token):
+        if request.method == 'POST':
+            password1 = request.POST.get('new_password1', '')
+            password2 = request.POST.get('new_password2', '')
+            if password1 != password2:
+                messages.error(request, 'パスワードが一致しません')
+                return render(request, 'registration/password_reset_confirm.html', {'validlink': True})
+            if len(password1) < 8:
+                messages.error(request, 'パスワードは8文字以上で入力してください')
+                return render(request, 'registration/password_reset_confirm.html', {'validlink': True})
+            user.set_password(password1)
+            user.save()
+            return redirect('custom_password_reset_complete')
+        return render(request, 'registration/password_reset_confirm.html', {'validlink': True})
+    else:
+        return render(request, 'registration/password_reset_confirm.html', {'validlink': False})
+
+
+def custom_password_reset_complete(request):
+    return render(request, 'registration/password_reset_complete.html')
