@@ -585,18 +585,37 @@
         return;
       }
 
-      // 未登録の場合
-      if (selectedCategoryValue === 'read') {
-        // 「読んだ本」は詳細登録画面へ
-        const params = new URLSearchParams({
-          google_book_id: registerData.googleBookId || '',
-          title: registerData.title || '',
-          author: registerData.author || '',
-          thumbnail_url: registerData.thumbnail || '',
-          description: registerData.description || '',
-        });
-        window.location.href = "{% url 'book_register_detail' %}?" + params.toString();
-      } else {
+    if (selectedCategoryValue === 'read') {
+      // 「読んだ本」はPOSTで詳細登録画面へ
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = "{% url 'book_register_detail' %}";
+
+      const csrfInput = document.createElement('input');
+      csrfInput.type = 'hidden';
+      csrfInput.name = 'csrfmiddlewaretoken';
+      csrfInput.value = csrfToken;
+      form.appendChild(csrfInput);
+
+      const fields = {
+        google_book_id: registerData.googleBookId || '',
+        title: registerData.title || '',
+        author: registerData.author || '',
+        thumbnail_url: registerData.thumbnail || '',
+        description: registerData.description || '',
+      };
+
+      for (const [key, value] of Object.entries(fields)) {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = key;
+        input.value = value;
+        form.appendChild(input);
+      }
+
+      document.body.appendChild(form);
+      form.submit();
+    } else {
         // それ以外はそのまま登録
         fetch("{% url 'register_book' %}", {
           method: 'POST',

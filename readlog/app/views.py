@@ -292,12 +292,12 @@ def book_register_detail(request):
 
     from .models import Genre, Status
     context = {
-        'google_book_id': request.GET.get('google_book_id', ''),
-        'title': request.GET.get('title', ''),
-        'author': request.GET.get('author', ''),
-        'thumbnail_url': request.GET.get('thumbnail_url', ''),
-        'description': request.GET.get('description', ''),
-        'from_edit': request.GET.get('from_edit', ''),
+        'google_book_id': request.POST.get('google_book_id', ''),
+        'title': request.POST.get('title', ''),
+        'author': request.POST.get('author', ''),
+        'thumbnail_url': request.POST.get('thumbnail_url', ''),
+        'description': request.POST.get('description', ''),
+        'from_edit': request.POST.get('from_edit', ''),
         'genres': Genre.objects.all(),
         'statuses': Status.objects.all(),
     }
