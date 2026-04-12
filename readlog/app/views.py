@@ -37,6 +37,7 @@ def index(request):
                 'maxResults': 20,
                 'startIndex': start_index,
                 'langRestrict': 'ja',
+                'orderBy': 'relevance',
                 'key': settings.GOOGLE_BOOKS_API_KEY,
             }
             try:
