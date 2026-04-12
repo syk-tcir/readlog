@@ -59,9 +59,11 @@ def index(request):
                 'description': info.get('description', 'あらすじ情報がありません。'),
                 'language': language,
             })
-
-    # 日本語の本のみ表示
-    books_list = [book for book in books_list if book.get('language') == 'ja']
+            
+    # 日本語の本を先に、それ以外は後ろに
+    ja_books = [book for book in books_list if book.get('language') == 'ja']
+    other_books = [book for book in books_list if book.get('language') != 'ja']
+    books_list = ja_books + other_books
 
     # 検索結果のページネーション
     search_page = request.GET.get('search_page', 1)
