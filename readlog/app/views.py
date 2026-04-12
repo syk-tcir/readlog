@@ -60,8 +60,8 @@ def index(request):
                 'language': language,
             })
 
-    # 日本語の本を先に表示
-    books_list.sort(key=lambda x: 0 if x.get('language') == 'ja' else 1)
+    # 日本語の本のみ表示
+    books_list = [book for book in books_list if book.get('language') == 'ja']
 
     # 検索結果のページネーション
     search_page = request.GET.get('search_page', 1)
