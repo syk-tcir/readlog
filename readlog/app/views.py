@@ -31,11 +31,16 @@ def index(request):
         all_items = []
         search_query = build_search_query(query)
 
+        # 日本語検索を強化
+        if not search_query.startswith('isbn:'):
+            search_query = f'{search_query}'
+
         for start_index in [0, 20]:
             params = {
                 'q': search_query,
                 'maxResults': 20,
                 'startIndex': start_index,
+                'langRestrict': 'ja',
                 'key': settings.GOOGLE_BOOKS_API_KEY,
             }
             try:
@@ -59,7 +64,7 @@ def index(request):
                 'description': info.get('description', 'あらすじ情報がありません。'),
                 'language': language,
             })
-            
+
     # 日本語の本を先に、それ以外は後ろに
     ja_books = [book for book in books_list if book.get('language') == 'ja']
     other_books = [book for book in books_list if book.get('language') != 'ja']
