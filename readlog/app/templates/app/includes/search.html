@@ -418,6 +418,22 @@
         >詳細</button>
       </div>
     {% endfor %}
+    {% if books.paginator.num_pages > 1 %}
+<div style="display:flex;justify-content:center;gap:6px;margin-top:16px;">
+  {% if books.has_previous %}
+    <a href="?q={{ query }}&section=search&search_page={{ books.previous_page_number }}"
+       style="padding:6px 12px;border:1.5px solid #c5ddc0;border-radius:7px;background:#f8fbf8;font-size:12px;color:#2d5a27;text-decoration:none;">＜</a>
+  {% endif %}
+  {% for num in books.paginator.page_range %}
+    <a href="?q={{ query }}&section=search&search_page={{ num }}"
+       style="padding:6px 12px;border:1.5px solid #c5ddc0;border-radius:7px;background:{% if num == books.number %}#5a9e4f{% else %}#f8fbf8{% endif %};font-size:12px;color:{% if num == books.number %}#fff{% else %}#2d5a27{% endif %};text-decoration:none;">{{ num }}</a>
+  {% endfor %}
+  {% if books.has_next %}
+    <a href="?q={{ query }}&section=search&search_page={{ books.next_page_number }}"
+       style="padding:6px 12px;border:1.5px solid #c5ddc0;border-radius:7px;background:#f8fbf8;font-size:12px;color:#2d5a27;text-decoration:none;">＞</a>
+  {% endif %}
+</div>
+{% endif %}
   {% else %}
     <div class="search-empty">
       <div style="font-size:40px;margin-bottom:10px;">📚</div>

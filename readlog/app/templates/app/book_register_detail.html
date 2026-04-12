@@ -202,6 +202,12 @@
     background: #eaf2ea;
     margin: 20px 0;
   }
+
+  input[type="date"]:disabled {
+    background-color: #e0e0e0;
+    color: #aaa;
+    cursor: not-allowed;
+  }
 </style>
 
 <div class="register-wrap">
@@ -314,6 +320,7 @@
       <textarea name="memo" placeholder="感想や気づきなど自由に..."></textarea>
     </div>
 
+    <input type="hidden" name="do_register" value="1">
     <button type="submit" class="btn-register-final">登録する</button>
   </form>
 </div>

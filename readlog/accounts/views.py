@@ -84,8 +84,8 @@ def account_edit(request):
 
 
 def password_change_done_view(request):
-    logout(request)
-    return render(request, 'registration/password_change_done.html')
+    messages.success(request, 'パスワードを変更しました')
+    return redirect('mypage')
 
 
 def custom_password_reset(request):

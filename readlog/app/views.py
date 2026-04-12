@@ -12,13 +12,12 @@ import random
 
 
 def build_search_query(query):
+    """ISBNの場合はisbn:プレフィックスをつける"""
     digits = query.replace('-', '')
     if digits.isdigit() and len(digits) in [10, 13]:
         return f'isbn:{query}'
-    import re
-    if re.fullmatch(r'[\u3040-\u30ff\u4e00-\u9fff]+', query):
-        return f'inauthor:{query}'  # ← inauthor:のみに変更
     return query
+
 
 @login_required
 def index(request):
@@ -32,12 +31,11 @@ def index(request):
         all_items = []
         search_query = build_search_query(query)
 
-        for start_index in [0, 20, 40, 60]:
+        for start_index in [0, 20]:
             params = {
                 'q': search_query,
                 'maxResults': 20,
                 'startIndex': start_index,
-                'langRestrict': 'ja',
                 'key': settings.GOOGLE_BOOKS_API_KEY,
             }
             try:
@@ -51,8 +49,6 @@ def index(request):
 
         for item in all_items:
             info = item.get('volumeInfo', {})
-            if info.get('language', '') != 'ja':
-                continue
             books_list.append({
                 'title': info.get('title', 'タイトル不明'),
                 'authors': info.get('authors', ['著者不明']),
@@ -60,6 +56,10 @@ def index(request):
                 'google_id': item.get('id'),
                 'description': info.get('description', 'あらすじ情報がありません。'),
             })
+    # 検索結果のページネーション
+    search_page = request.GET.get('search_page', 1)
+    search_paginator = Paginator(books_list, 10)
+    books_page_obj = search_paginator.get_page(search_page)
 
     # ランダム本表示
     random_books = []
@@ -151,7 +151,7 @@ def index(request):
     from .models import Genre, Status
     context = {
         'query': query,
-        'books': books_list,
+        'books': books_page_obj,
         'page_obj': page_obj,
         'category': category,
         'sort': sort,
@@ -233,6 +233,21 @@ def register_book(request):
 @login_required
 def book_register_detail(request):
     if request.method == 'POST':
+        # 「登録する」ボタンが押された場合のみ登録処理
+        if not request.POST.get('do_register'):
+            from .models import Genre, Status
+            context = {
+                'google_book_id': request.POST.get('google_book_id', ''),
+                'title': request.POST.get('title', ''),
+                'author': request.POST.get('author', ''),
+                'thumbnail_url': request.POST.get('thumbnail_url', ''),
+                'description': request.POST.get('description', ''),
+                'from_edit': request.POST.get('from_edit', ''),
+                'genres': Genre.objects.all(),
+                'statuses': Status.objects.all(),
+            }
+            return render(request, 'app/book_register_detail.html', context)
+        
         google_book_id = request.POST.get('google_book_id', '')
         print("google_book_id:", google_book_id)
         print("title:", request.POST.get('title'))
@@ -434,7 +449,6 @@ def book_edit(request, book_id):
             reading_record.impressive_text = request.POST.get('impressive_text', '')
             reading_record.memo = request.POST.get('memo', '')
             reading_record.save()
-        messages.success(request, f'「{book.title}」の情報を更新しました！')
         return redirect('book_detail', book_id=book.id)
 
     from .models import Genre, Status
@@ -451,13 +465,13 @@ def book_edit(request, book_id):
 def book_delete(request, book_id):
     if request.method == 'POST':
         book = Book.objects.get(id=book_id, user=request.user)
-        book_title = book.title
+        title = book.title
         ReadingRecord.objects.filter(
             user=request.user,
             google_book_id=book.google_book_id
         ).delete()
         book.delete()
-        messages.success(request, f'「{book_title}」を削除しました')
+        messages.success(request, f'「{title}」を削除しました')
         return redirect('home')
     return redirect('book_detail', book_id=book_id)
 
