@@ -36,8 +36,6 @@ def index(request):
                 'q': search_query,
                 'maxResults': 20,
                 'startIndex': start_index,
-                'langRestrict': 'ja',
-                'orderBy': 'relevance',
                 'key': settings.GOOGLE_BOOKS_API_KEY,
             }
             try:
@@ -51,13 +49,20 @@ def index(request):
 
         for item in all_items:
             info = item.get('volumeInfo', {})
+            language = info.get('language', '')
+            title = info.get('title', 'タイトル不明')
             books_list.append({
-                'title': info.get('title', 'タイトル不明'),
+                'title': title,
                 'authors': info.get('authors', ['著者不明']),
                 'thumbnail': info.get('imageLinks', {}).get('thumbnail', ''),
                 'google_id': item.get('id'),
                 'description': info.get('description', 'あらすじ情報がありません。'),
+                'language': language,
             })
+
+    # 日本語の本を先に表示
+    books_list.sort(key=lambda x: 0 if x.get('language') == 'ja' else 1)
+
     # 検索結果のページネーション
     search_page = request.GET.get('search_page', 1)
     search_paginator = Paginator(books_list, 10)
