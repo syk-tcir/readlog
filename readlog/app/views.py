@@ -36,6 +36,7 @@ def index(request):
                 'q': search_query,
                 'maxResults': 20,
                 'startIndex': start_index,
+                'langRestrict': 'ja',
                 'key': settings.GOOGLE_BOOKS_API_KEY,
             }
             try:
