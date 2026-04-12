@@ -44,7 +44,9 @@ def register(request):
             email=email,
             password=password1,
         )
-        return redirect('login')
+        login(request, user)
+        messages.success(request, 'アカウントを登録しました！')  # ← 追加
+        return redirect('home')
 
     return render(request, 'accounts/register.html')
 
@@ -91,13 +93,10 @@ def custom_password_reset(request):
         email = request.POST.get('email', '').strip()
         try:
             user = User.objects.get(email=email)
-            # トークン生成
             token = default_token_generator.make_token(user)
             uid = urlsafe_base64_encode(force_bytes(user.pk))
-            # リセットURL生成
             domain = request.get_host()
             reset_url = f"https://{domain}/accounts/reset/{uid}/{token}/"
-            # Brevo APIでメール送信
             api_key = settings.BREVO_API_KEY
             response = http_requests.post(
                 'https://api.brevo.com/v3/smtp/email',
@@ -122,10 +121,11 @@ ReadLog
                     ''',
                 }
             )
-        except User.DoesNotExist:
-            pass  # メールが存在しない場合も同じ画面を表示（セキュリティ対策）
+            return redirect('custom_password_reset_done')
 
-        return redirect('custom_password_reset_done')
+        except User.DoesNotExist:
+            messages.error(request, '入力されたメールアドレスは登録されていません')
+            return render(request, 'registration/password_reset_form.html')
 
     return render(request, 'registration/password_reset_form.html')
 

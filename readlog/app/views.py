@@ -12,12 +12,13 @@ import random
 
 
 def build_search_query(query):
-    """ISBNの場合はisbn:プレフィックスをつける"""
     digits = query.replace('-', '')
     if digits.isdigit() and len(digits) in [10, 13]:
         return f'isbn:{query}'
+    import re
+    if re.fullmatch(r'[\u3040-\u30ff\u4e00-\u9fff]+', query):
+        return f'inauthor:{query}'  # ← inauthor:のみに変更
     return query
-
 
 @login_required
 def index(request):
@@ -31,11 +32,12 @@ def index(request):
         all_items = []
         search_query = build_search_query(query)
 
-        for start_index in [0, 20]:
+        for start_index in [0, 20, 40, 60]:
             params = {
                 'q': search_query,
                 'maxResults': 20,
                 'startIndex': start_index,
+                'langRestrict': 'ja',
                 'key': settings.GOOGLE_BOOKS_API_KEY,
             }
             try:
@@ -49,6 +51,8 @@ def index(request):
 
         for item in all_items:
             info = item.get('volumeInfo', {})
+            if info.get('language', '') != 'ja':
+                continue
             books_list.append({
                 'title': info.get('title', 'タイトル不明'),
                 'authors': info.get('authors', ['著者不明']),
@@ -430,6 +434,7 @@ def book_edit(request, book_id):
             reading_record.impressive_text = request.POST.get('impressive_text', '')
             reading_record.memo = request.POST.get('memo', '')
             reading_record.save()
+        messages.success(request, f'「{book.title}」の情報を更新しました！')
         return redirect('book_detail', book_id=book.id)
 
     from .models import Genre, Status
@@ -446,11 +451,13 @@ def book_edit(request, book_id):
 def book_delete(request, book_id):
     if request.method == 'POST':
         book = Book.objects.get(id=book_id, user=request.user)
+        book_title = book.title
         ReadingRecord.objects.filter(
             user=request.user,
             google_book_id=book.google_book_id
         ).delete()
         book.delete()
+        messages.success(request, f'「{book_title}」を削除しました')
         return redirect('home')
     return redirect('book_detail', book_id=book_id)
 

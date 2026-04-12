@@ -82,6 +82,12 @@
   <h1>ReadLog</h1>
   <h2></h2>
 
+  {% if messages %}
+    {% for message in messages %}
+      <div class="success-msg">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+
   {% if form.errors %}
     <div class="error-msg">メールアドレスまたはパスワードが正しくありません</div>
   {% endif %}
