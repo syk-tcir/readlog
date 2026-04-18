@@ -12,12 +12,10 @@ import random
 
 
 def build_search_query(query):
-    """ISBNの場合はisbn:プレフィックスをつける"""
     digits = query.replace('-', '')
     if digits.isdigit() and len(digits) in [10, 13]:
         return f'isbn:{query}'
-    return query
-
+    return query  # intitle: も inauthor: も外す
 
 @login_required
 def index(request):
@@ -29,29 +27,31 @@ def index(request):
     if query and section != 'books':
         url = "https://www.googleapis.com/books/v1/volumes"
         all_items = []
-        search_query = build_search_query(query)
+        search_query = build_search_query(query)  # if文は丸ごと削除してOK
+        print(f"query: '{query}', search_query: '{search_query}'")
 
-        # 日本語検索を強化
-        if not search_query.startswith('isbn:'):
-            search_query = f'{search_query}'
-
-        for start_index in [0, 20]:
+        for start_index in [0]:
             params = {
                 'q': search_query,
                 'maxResults': 20,
                 'startIndex': start_index,
-                'langRestrict': 'ja',
+                'orderBy': 'relevance',   # 追加
                 'key': settings.GOOGLE_BOOKS_API_KEY,
             }
             try:
                 response = requests.get(url, params=params, timeout=5)
                 response.raise_for_status()
                 data = response.json()
+                print(f"search_query: {search_query}")   # 追加
+                print(f"status_code: {response.status_code}")  # 追加
+                print(f"totalItems: {data.get('totalItems', 0)}")  # 追加
                 if 'items' in data:
                     all_items.extend(data['items'])
             except Exception as e:
+                print(f"エラー内容: {e}")
                 messages.error(request, f"検索中にエラーが発生しました: {e}")
 
+        print(f"取得件数: {len(all_items)}")
         for item in all_items:
             info = item.get('volumeInfo', {})
             language = info.get('language', '')
