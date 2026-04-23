@@ -14,8 +14,8 @@ import random
 def build_search_query(query):
     digits = query.replace('-', '')
     if digits.isdigit() and len(digits) in [10, 13]:
-        return f'isbn:{query}'
-    return query  # intitle: も inauthor: も外す
+        return [f'isbn:{query}']
+    return [f'intitle:{query}', f'inauthor:{query}']
 
 @login_required
 def index(request):
@@ -23,46 +23,41 @@ def index(request):
     section = request.GET.get('section', '')
     books_list = []
 
-    # Google Books API検索（検索タブのみ）
     if query and section != 'books':
         url = "https://www.googleapis.com/books/v1/volumes"
         all_items = []
-        search_query = build_search_query(query)  # if文は丸ごと削除してOK
-        print(f"query: '{query}', search_query: '{search_query}'")
+        seen_ids = set()
 
-        for start_index in [0]:
+        for search_query in build_search_query(query):
             params = {
                 'q': search_query,
                 'maxResults': 20,
-                'startIndex': start_index,
-                'orderBy': 'relevance',   # 追加
+                'startIndex': 0,
+                'langRestrict': 'ja',
+                'orderBy': 'relevance',
                 'key': settings.GOOGLE_BOOKS_API_KEY,
             }
             try:
                 response = requests.get(url, params=params, timeout=5)
                 response.raise_for_status()
                 data = response.json()
-                print(f"search_query: {search_query}")   # 追加
-                print(f"status_code: {response.status_code}")  # 追加
-                print(f"totalItems: {data.get('totalItems', 0)}")  # 追加
                 if 'items' in data:
-                    all_items.extend(data['items'])
+                    for item in data['items']:
+                        if item.get('id') not in seen_ids:
+                            seen_ids.add(item.get('id'))
+                            all_items.append(item)
             except Exception as e:
-                print(f"エラー内容: {e}")
                 messages.error(request, f"検索中にエラーが発生しました: {e}")
 
-        print(f"取得件数: {len(all_items)}")
         for item in all_items:
             info = item.get('volumeInfo', {})
-            language = info.get('language', '')
-            title = info.get('title', 'タイトル不明')
             books_list.append({
-                'title': title,
+                'title': info.get('title', 'タイトル不明'),
                 'authors': info.get('authors', ['著者不明']),
                 'thumbnail': info.get('imageLinks', {}).get('thumbnail', ''),
                 'google_id': item.get('id'),
                 'description': info.get('description', 'あらすじ情報がありません。'),
-                'language': language,
+                'language': info.get('language', ''),
             })
 
     # 日本語の本を先に、それ以外は後ろに
