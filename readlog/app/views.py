@@ -28,38 +28,53 @@ def index(request):
         all_items = []
         seen_ids = set()
 
-        for search_query in build_search_query(query):
-            params = {
-                'q': search_query,
-                'maxResults': 20,
-                'startIndex': 0,
-                'langRestrict': 'ja',
-                'orderBy': 'relevance',
-                'key': settings.GOOGLE_BOOKS_API_KEY,
-            }
-            try:
-                response = requests.get(url, params=params, timeout=5)
-                response.raise_for_status()
-                data = response.json()
-                if 'items' in data:
-                    for item in data['items']:
-                        if item.get('id') not in seen_ids:
-                            seen_ids.add(item.get('id'))
-                            all_items.append(item)
-            except Exception as e:
-                messages.error(request, f"検索中にエラーが発生しました: {e}")
+    if query and section != 'books':
+        # セッションキーを作成
+        session_key = f'search_results_{query}'
+        
+        # セッションに保存済みの結果があればそれを使う
+        if session_key not in request.session:
+            url = "https://www.googleapis.com/books/v1/volumes"
+            all_items = []
+            seen_ids = set()
 
-        for item in all_items:
-            info = item.get('volumeInfo', {})
-            books_list.append({
-                'title': info.get('title', 'タイトル不明'),
-                'authors': info.get('authors', ['著者不明']),
-                'thumbnail': info.get('imageLinks', {}).get('thumbnail', ''),
-                'google_id': item.get('id'),
-                'description': info.get('description', 'あらすじ情報がありません。'),
-                'language': info.get('language', ''),
-            })
+            for search_query in build_search_query(query):
+                params = {
+                    'q': search_query,
+                    'maxResults': 20,
+                    'startIndex': 0,
+                    'langRestrict': 'ja',
+                    'orderBy': 'relevance',
+                    'key': settings.GOOGLE_BOOKS_API_KEY,
+                }
+                try:
+                    response = requests.get(url, params=params, timeout=5)
+                    response.raise_for_status()
+                    data = response.json()
+                    if 'items' in data:
+                        for item in data['items']:
+                            if item.get('id') not in seen_ids:
+                                seen_ids.add(item.get('id'))
+                                all_items.append(item)
+                except Exception as e:
+                    messages.error(request, f"検索中にエラーが発生しました: {e}")
 
+            # 結果をセッションに保存
+            books_data = []
+            for item in all_items:
+                info = item.get('volumeInfo', {})
+                books_data.append({
+                    'title': info.get('title', 'タイトル不明'),
+                    'authors': info.get('authors', ['著者不明']),
+                    'thumbnail': info.get('imageLinks', {}).get('thumbnail', ''),
+                    'google_id': item.get('id'),
+                    'description': info.get('description', 'あらすじ情報がありません。'),
+                    'language': info.get('language', ''),
+                })
+            request.session[session_key] = books_data
+
+        books_list = request.session[session_key]
+        
     # 日本語の本を先に、それ以外は後ろに
     ja_books = [book for book in books_list if book.get('language') == 'ja']
     other_books = [book for book in books_list if book.get('language') != 'ja']
