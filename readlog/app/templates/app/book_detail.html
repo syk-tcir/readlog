@@ -129,6 +129,68 @@
     font-weight: 800;
     cursor: pointer;
   }
+  /* 削除確認モーダル */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.active { display: flex; }
+
+  .modal-box {
+    background: #fff;
+    border-radius: 16px;
+    padding: 24px 20px;
+    max-width: 320px;
+    width: 90%;
+    text-align: center;
+  }
+
+  .modal-box h3 {
+    font-size: 15px;
+    font-weight: 800;
+    color: #1a3d17;
+    margin-bottom: 8px;
+  }
+
+  .modal-box p {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 20px;
+  }
+
+  .modal-buttons {
+    display: flex;
+    gap: 10px;
+  }
+
+  .btn-modal-cancel {
+    flex: 1;
+    padding: 12px;
+    background: #f0f8ee;
+    color: #2d5a27;
+    border: 2px solid #5a9e4f;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 800;
+    cursor: pointer;
+  }
+
+  .btn-modal-delete {
+    flex: 1;
+    padding: 12px;
+    background: #e53935;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 800;
+    cursor: pointer;
+  }
 </style>
 
 <div class="detail-wrap">
@@ -233,15 +295,29 @@
 </div>
 
 <!-- 削除確認フォーム -->
+<!-- 削除確認モーダル -->
+<div class="modal-overlay" id="delete-modal">
+  <div class="modal-box">
+    <h3>本を削除しますか？</h3>
+    <p>「{{ book.title }}」を削除します。<br>この操作は取り消せません。</p>
+    <div class="modal-buttons">
+      <button class="btn-modal-cancel" onclick="closeModal()">キャンセル</button>
+      <button class="btn-modal-delete" onclick="document.getElementById('delete-form').submit()">削除</button>
+    </div>
+  </div>
+</div>
+
+<!-- 削除確認フォーム -->
 <form id="delete-form" method="POST" action="{% url 'book_delete' book.id %}" style="display:none;">
   {% csrf_token %}
 </form>
 
 <script>
   function confirmDelete() {
-    if (confirm('「{{ book.title|escapejs }}」を削除しますか？\nこの操作は取り消せません。')) {
-      document.getElementById('delete-form').submit();
-    }
+    document.getElementById('delete-modal').classList.add('active');
+  }
+  function closeModal() {
+    document.getElementById('delete-modal').classList.remove('active');
   }
 </script>
 

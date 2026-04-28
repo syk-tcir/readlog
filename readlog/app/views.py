@@ -415,22 +415,19 @@ def book_edit(request, book_id):
             new_category = request.POST.get('category')
 
             if new_category == 'read':
-                from urllib.parse import urlencode
-                google_book_id = book.google_book_id
-                title = book.title
-                author = book.author
-                thumbnail_url = book.thumbnail_url
-                description = book.description
-                book.delete()
-                params = urlencode({
-                    'google_book_id': google_book_id,
-                    'title': title,
-                    'author': author,
-                    'thumbnail_url': thumbnail_url,
-                    'description': description,
+                from .models import Genre, Status
+                context = {
+                    'google_book_id': book.google_book_id,
+                    'title': book.title,
+                    'author': book.author,
+                    'thumbnail_url': book.thumbnail_url,
+                    'description': book.description,
                     'from_edit': '1',
-                })
-                return redirect(f"/books/register/detail/?{params}")
+                    'genres': Genre.objects.all(),
+                    'statuses': Status.objects.all(),
+                }
+                book.delete()
+                return render(request, 'app/book_register_detail.html', context)
 
             if new_category:
                 book.category = new_category
