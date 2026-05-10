@@ -130,8 +130,8 @@
 
   <!-- ログアウト -->
   <form method="POST" action="{% url 'logout' %}">
-    {% csrf_token %}
-    <button type="submit" class="btn-logout">ログアウト</button>
+  {% csrf_token %}
+  <button type="button" class="btn-logout" onclick="openLogoutModal()">ログアウト</button>
   </form>
 </div>
 

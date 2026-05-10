@@ -30,6 +30,14 @@ def register(request):
         if len(password1) < 8:
             messages.error(request, 'パスワードは8文字以上で入力してください')
             return render(request, 'accounts/register.html')
+        
+        if password1.isdigit():
+            messages.error(request, 'パスワードは数字だけでは使用できません')
+            return render(request, 'accounts/register.html')
+
+        if password1.isalpha():
+            messages.error(request, 'パスワードは英字だけでは使用できません')
+            return render(request, 'accounts/register.html')
 
         if User.objects.filter(username=username).exists():
             messages.error(request, 'この名前はすでに使われています')
